@@ -20,8 +20,10 @@ jobs:
 
       - name: Install dependencies
         run: |
+          sudo apt-get update
+          sudo apt-get install -y chromium-browser chromium-chromedriver
           python -m pip install --upgrade pip
-          pip install requests beautifulsoup4 feedgen
+          pip install selenium beautifulsoup4 feedgen
 
       - name: Run the script
         run: python Generate_Feed.py
