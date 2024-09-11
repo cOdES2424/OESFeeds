@@ -1,23 +1,57 @@
-import requests
+from selenium import webdriver
+from selenium.webdriver.chrome.service import Service
+from selenium.webdriver.chrome.options import Options
+from selenium.webdriver.common.by import By
+from selenium.webdriver.common.keys import Keys
 from bs4 import BeautifulSoup
+import time
 from feedgen.feed import FeedGenerator
 from datetime import datetime, timedelta
 
-# Step 1: Log in to the website
+# Set up the Selenium WebDriver with headless Chrome
+chrome_options = Options()
+chrome_options.add_argument("--headless")
+chrome_options.add_argument("--no-sandbox")
+chrome_options.add_argument("--disable-dev-shm-usage")
+
+service = Service('/usr/bin/chromedriver')  # Ensure ChromeDriver is in PATH
+driver = webdriver.Chrome(service=service, options=chrome_options)
+
+# Step 1: Open the login page
 login_url = 'https://apps.occ.ok.gov/PSTPortal/Account/Login'
-session = requests.Session()
-login_payload = {
-    'UserName': 'bolzmi@hotmail.com',
-    'Password': 'redfred4'
-}
-session.post(login_url, data=login_payload)
+driver.get(login_url)
 
-# Step 2: Navigate to the Case Actions page
+# Step 2: Fill in the login form with correct field locators
+username = driver.find_element(By.NAME, 'UserName')
+password = driver.find_element(By.NAME, 'Password')
+
+# Enter your login credentials
+username.send_keys('bolzmi@hotmail.com')
+password.send_keys('redfred4')
+
+# Step 3: Submit the login form
+password.send_keys(Keys.RETURN)
+
+# Give the page some time to load after login
+time.sleep(5)
+
+# Step 4: Navigate to the intermediary page
+intermediate_url = 'https://apps.occ.ok.gov/PSTPortal/CorrectiveAction/Forward?Length=16'
+driver.get(intermediate_url)
+
+# Wait for the intermediate page to load
+time.sleep(5)
+
+# Step 5: Navigate to the Case Actions page
 case_actions_url = 'https://apps.occ.ok.gov/LicenseePortal/CaseActions.aspx'
-response = session.get(case_actions_url)
+driver.get(case_actions_url)
 
-# Step 3: Parse the page with BeautifulSoup
-soup = BeautifulSoup(response.content, 'html.parser')
+# Wait for the Case Actions page to load
+time.sleep(5)
+
+# Step 6: Parse the page with BeautifulSoup
+html = driver.page_source
+soup = BeautifulSoup(html, 'html.parser')
 
 # Extract the necessary data from the table
 table = soup.find('table', {'class': 'rptGridView'})  # Adjust the class as necessary
@@ -45,7 +79,7 @@ for row in rows:
         except ValueError:
             continue  # Skip rows where the date format is incorrect
 
-# Step 4: Generate feed with Feedgen
+# Step 7: Generate feed with Feedgen
 fg = FeedGenerator()
 fg.title('Case Actions Feed')
 fg.link(href='https://apps.occ.ok.gov/LicenseePortal/CaseActions.aspx')
@@ -63,7 +97,7 @@ fg.rss_file(rss_feed_path)
 
 print("RSS feed generated successfully")
 
-# Step 5: Generate OPML file
+# Step 8: Generate OPML file
 opml_content = f"""<?xml version="1.0" encoding="UTF-8"?>
 <opml version="1.0">
   <head>
@@ -71,7 +105,7 @@ opml_content = f"""<?xml version="1.0" encoding="UTF-8"?>
     <ownerName>OES</ownerName>
   </head>
   <body>
-    <outline text="Case Actions Feed" type="rss" xmlUrl="https://your-github-username.github.io/CaseActions/case_actions_feed.xml" htmlUrl="https://apps.occ.ok.gov/LicenseePortal/CaseActions.aspx"/>
+    <outline text="Case Actions Feed" type="rss" xmlUrl="https://bolzmi.github.io/CaseActions/case_actions_feed.xml" htmlUrl="https://apps.occ.ok.gov/LicenseePortal/CaseActions.aspx"/>
   </body>
 </opml>
 """
@@ -80,3 +114,6 @@ with open('case_actions_feed.opml', 'w') as f:
     f.write(opml_content)
 
 print("OPML file generated successfully")
+
+# Step 9: Close the WebDriver
+driver.quit()
