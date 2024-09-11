@@ -1,0 +1,37 @@
+name: Update RSS Feed
+
+on:
+  schedule:
+    - cron: '0 8-17 * * 1-5'  # Runs every hour from 8 AM to 5 PM, Monday through Friday
+  workflow_dispatch:  # Allows manual triggering
+
+jobs:
+  update-feed:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v2
+
+      - name: Set up Python
+        uses: actions/setup-python@v2
+        with:
+          python-version: '3.x'
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install selenium beautifulsoup4 feedgen
+
+      - name: Run the script
+        run: python Generate_Feed.py
+
+      - name: Commit and push changes
+        run: |
+          git config --global user.name 'github-actions'
+          git config --global user.email 'github-actions@github.com'
+          git add case_actions_feed.xml case_actions_feed.opml
+          git commit -m 'Update RSS feed'
+          git push
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
