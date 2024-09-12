@@ -64,20 +64,21 @@ for row in rows:
 filtered_titles.reverse()
 
 # Step 7: Generate RSS feed manually
-rss = ET.Element('rss', version='2.0')
+rss = ET.Element('rss', version='2.0', xmlns_atom="http://www.w3.org/2005/Atom")
 channel = ET.SubElement(rss, 'channel')
 ET.SubElement(channel, 'title').text = 'Case Actions Feed'
 ET.SubElement(channel, 'link').text = 'https://apps.occ.ok.gov/LicenseePortal/CaseActions.aspx'
 ET.SubElement(channel, 'description').text = 'Feed of case actions from the Oklahoma Corporation Commission'
 ET.SubElement(channel, 'language').text = 'en-US'
 ET.SubElement(channel, 'lastBuildDate').text = datetime.now(timezone.utc).strftime('%a, %d %b %Y %H:%M:%S %z')
+ET.SubElement(channel, 'atom:link', href="https://raw.githubusercontent.com/bolzmi/CaseActions/main/case_actions_feed.xml", rel="self", type="application/rss+xml")
 
-for title in filtered_titles:
+for idx, title in enumerate(filtered_titles):
     item = ET.SubElement(channel, 'item')
     ET.SubElement(item, 'title').text = title
     ET.SubElement(item, 'link').text = 'https://apps.occ.ok.gov/LicenseePortal/CaseActions.aspx'
     ET.SubElement(item, 'description').text = title
-    ET.SubElement(item, 'guid').text = title
+    ET.SubElement(item, 'guid').text = f"unique-identifier-{idx}"
     ET.SubElement(item, 'pubDate').text = datetime.now(timezone.utc).strftime('%a, %d %b %Y %H:%M:%S %z')
 
 rss_feed_path = 'case_actions_feed.xml'
@@ -87,7 +88,16 @@ tree.write(rss_feed_path, encoding='utf-8', xml_declaration=True)
 print("RSS feed generated successfully")
 
 # Step 8: Generate OPML file
-opml_content = f"""<?xml version="1.0" encoding="UTF-8"?><opml version="1.0"><head><title>Case Actions Feed</title><ownerName>OES</ownerName></head><body><outline text="Case Actions Feed" type="rss" xmlUrl="{rss_feed_path}" htmlUrl="https://apps.occ.ok.gov/LicenseePortal/CaseActions.aspx"/></body></opml>
+opml_content = f"""<?xml version="1.0" encoding="UTF-8"?>
+<opml version="1.0">
+  <head>
+    <title>Case Actions Feed</title>
+    <ownerName>OES</ownerName>
+  </head>
+  <body>
+    <outline text="Case Actions Feed" type="rss" xmlUrl="https://raw.githubusercontent.com/bolzmi/CaseActions/main/case_actions_feed.xml" htmlUrl="https://apps.occ.ok.gov/LicenseePortal/CaseActions.aspx"/>
+  </body>
+</opml>
 """
 
 with open('case_actions_feed.opml', 'w') as f:
