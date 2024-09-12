@@ -26,12 +26,17 @@ jobs:
       - name: Run the script
         run: python Generate_Feed.py
 
+      - name: Debug Git status
+        run: |
+          git status
+          git log -1
+
       - name: Commit and push changes
         run: |
           git config --global user.name 'github-actions'
           git config --global user.email 'github-actions@github.com'
           git add case_actions_feed.xml case_actions_feed.opml
-          git commit -m 'Update RSS feed'
+          git commit -m 'Update RSS feed' || echo "No changes to commit"
           git push
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
