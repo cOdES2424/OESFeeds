@@ -1,10 +1,1 @@
-<?xml version="1.0" encoding="UTF-8"?>
-<opml version="1.0">
-  <head>
-    <title>Case Actions Feed</title>
-    <ownerName>OES</ownerName>
-  </head>
-  <body>
-    <outline text="Case Actions Feed" type="rss" xmlUrl="case_actions_feed.xml" htmlUrl="https://apps.occ.ok.gov/LicenseePortal/CaseActions.aspx"/>
-  </body>
-</opml>
+<?xml version="1.0" encoding="UTF-8"?><opml version="1.0"><head><title>Case Actions Feed</title><ownerName>OES</ownerName></head><body><outline text="Case Actions Feed" type="rss" xmlUrl="case_actions_feed.xml" htmlUrl="https://apps.occ.ok.gov/LicenseePortal/CaseActions.aspx"/></body></opml>
