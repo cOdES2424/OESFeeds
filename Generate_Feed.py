@@ -1,57 +1,38 @@
-from selenium import webdriver
-from selenium.webdriver.chrome.service import Service
-from selenium.webdriver.chrome.options import Options
-from selenium.webdriver.common.by import By
-from selenium.webdriver.common.keys import Keys
+import requests
 from bs4 import BeautifulSoup
-import time
-from feedgen.feed import FeedGenerator
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
+import xml.etree.ElementTree as ET
 
-# Set up the Selenium WebDriver with headless Chrome
-chrome_options = Options()
-chrome_options.add_argument("--headless")
-chrome_options.add_argument("--no-sandbox")
-chrome_options.add_argument("--disable-dev-shm-usage")
-
-service = Service('/usr/bin/chromedriver')  # Ensure ChromeDriver is in PATH
-driver = webdriver.Chrome(service=service, options=chrome_options)
-
-# Step 1: Open the login page
+# Step 1: Open the login page and get the login form
 login_url = 'https://apps.occ.ok.gov/PSTPortal/Account/Login'
-driver.get(login_url)
+session = requests.Session()
+login_page = session.get(login_url)
+soup = BeautifulSoup(login_page.content, 'html.parser')
 
 # Step 2: Fill in the login form with correct field locators
-username = driver.find_element(By.NAME, 'UserName')
-password = driver.find_element(By.NAME, 'Password')
+login_data = {
+    'UserName': 'bolzmi@hotmail.com',
+    'Password': 'redfred4'
+}
 
-# Enter your login credentials
-username.send_keys('bolzmi@hotmail.com')
-password.send_keys('redfred4')
+# Find the hidden input fields and add them to login_data
+hidden_inputs = soup.find_all('input', type='hidden')
+for hidden_input in hidden_inputs:
+    login_data[hidden_input['name']] = hidden_input['value']
 
 # Step 3: Submit the login form
-password.send_keys(Keys.RETURN)
-
-# Give the page some time to load after login
-time.sleep(5)
+session.post(login_url, data=login_data)
 
 # Step 4: Navigate to the intermediary page
 intermediate_url = 'https://apps.occ.ok.gov/PSTPortal/CorrectiveAction/Forward?Length=16'
-driver.get(intermediate_url)
-
-# Wait for the intermediate page to load
-time.sleep(5)
+session.get(intermediate_url)
 
 # Step 5: Navigate to the Case Actions page
 case_actions_url = 'https://apps.occ.ok.gov/LicenseePortal/CaseActions.aspx'
-driver.get(case_actions_url)
-
-# Wait for the Case Actions page to load
-time.sleep(5)
+case_actions_page = session.get(case_actions_url)
 
 # Step 6: Parse the page with BeautifulSoup
-html = driver.page_source
-soup = BeautifulSoup(html, 'html.parser')
+soup = BeautifulSoup(case_actions_page.content, 'html.parser')
 
 # Extract the necessary data from the table
 table = soup.find('table', {'class': 'rptGridView'})  # Adjust the class as necessary
@@ -79,41 +60,37 @@ for row in rows:
         except ValueError:
             continue  # Skip rows where the date format is incorrect
 
-# Step 7: Generate feed with Feedgen
-fg = FeedGenerator()
-fg.title('Case Actions Feed')
-fg.link(href='https://apps.occ.ok.gov/LicenseePortal/CaseActions.aspx')
-fg.description('Feed of case actions from the Oklahoma Corporation Commission')
+# Reverse the order of filtered titles to show newest first
+filtered_titles.reverse()
+
+# Step 7: Generate RSS feed manually
+rss = ET.Element('rss', version='2.0')
+channel = ET.SubElement(rss, 'channel')
+ET.SubElement(channel, 'title').text = 'Case Actions Feed'
+ET.SubElement(channel, 'link').text = 'https://apps.occ.ok.gov/LicenseePortal/CaseActions.aspx'
+ET.SubElement(channel, 'description').text = 'Feed of case actions from the Oklahoma Corporation Commission'
+ET.SubElement(channel, 'language').text = 'en-US'
+ET.SubElement(channel, 'lastBuildDate').text = datetime.now(timezone.utc).strftime('%a, %d %b %Y %H:%M:%S %z')
 
 for title in filtered_titles:
-    fe = fg.add_entry()
-    fe.title(title)
-    fe.link(href='https://apps.occ.ok.gov/LicenseePortal/CaseActions.aspx')
-    fe.description(title)
+    item = ET.SubElement(channel, 'item')
+    ET.SubElement(item, 'title').text = title
+    ET.SubElement(item, 'link').text = 'https://apps.occ.ok.gov/LicenseePortal/CaseActions.aspx'
+    ET.SubElement(item, 'description').text = title
+    ET.SubElement(item, 'guid').text = title
+    ET.SubElement(item, 'pubDate').text = datetime.now(timezone.utc).strftime('%a, %d %b %Y %H:%M:%S %z')
 
-# Save the feed to a file
 rss_feed_path = 'case_actions_feed.xml'
-fg.rss_file(rss_feed_path)
+tree = ET.ElementTree(rss)
+tree.write(rss_feed_path, encoding='utf-8', xml_declaration=True)
 
 print("RSS feed generated successfully")
 
 # Step 8: Generate OPML file
-opml_content = f"""<?xml version="1.0" encoding="UTF-8"?>
-<opml version="1.0">
-  <head>
-    <title>Case Actions Feed</title>
-    <ownerName>OES</ownerName>
-  </head>
-  <body>
-    <outline text="Case Actions Feed" type="rss" xmlUrl="https://bolzmi.github.io/CaseActions/case_actions_feed.xml" htmlUrl="https://apps.occ.ok.gov/LicenseePortal/CaseActions.aspx"/>
-  </body>
-</opml>
+opml_content = f"""<?xml version="1.0" encoding="UTF-8"?><opml version="1.0"><head><title>Case Actions Feed</title><ownerName>OES</ownerName></head><body><outline text="Case Actions Feed" type="rss" xmlUrl="{rss_feed_path}" htmlUrl="https://apps.occ.ok.gov/LicenseePortal/CaseActions.aspx"/></body></opml>
 """
 
 with open('case_actions_feed.opml', 'w') as f:
     f.write(opml_content)
 
 print("OPML file generated successfully")
-
-# Step 9: Close the WebDriver
-driver.quit()
