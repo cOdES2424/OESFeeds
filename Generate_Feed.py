@@ -98,18 +98,23 @@ for idx, title in enumerate(filtered_titles):
 
 # Step 9: Save new GUIDs to the file
 if new_guids:
-    with open(processed_guids_file, 'a') as f:
-        for guid in new_guids:
-            f.write(guid + '\n')
-    print(f"Processed GUIDs saved to {processed_guids_file}")
+    try:
+        with open(processed_guids_file, 'a') as f:
+            for guid in new_guids:
+                f.write(guid + '\n')
+        print(f"Processed GUIDs saved to {processed_guids_file}")
+    except Exception as e:
+        print(f"Error writing to {processed_guids_file}: {e}")
 else:
     print("No new GUIDs to save")
 
 rss_feed_path = 'case_actions_feed.xml'
-tree = ET.ElementTree(rss)
-tree.write(rss_feed_path, encoding='utf-8', xml_declaration=True)
-
-print("RSS feed generated successfully")
+try:
+    tree = ET.ElementTree(rss)
+    tree.write(rss_feed_path, encoding='utf-8', xml_declaration=True)
+    print("RSS feed generated successfully")
+except Exception as e:
+    print(f"Error writing RSS feed: {e}")
 
 # Step 10: Generate OPML file
 opml_content = f"""<?xml version="1.0" encoding="UTF-8"?>
@@ -124,7 +129,9 @@ opml_content = f"""<?xml version="1.0" encoding="UTF-8"?>
 </opml>
 """
 
-with open('case_actions_feed.opml', 'w') as f:
-    f.write(opml_content)
-
-print("OPML file generated successfully")
+try:
+    with open('case_actions_feed.opml', 'w') as f:
+        f.write(opml_content)
+    print("OPML file generated successfully")
+except Exception as e:
+    print(f"Error writing OPML file: {e}")
