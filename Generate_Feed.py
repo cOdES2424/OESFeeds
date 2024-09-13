@@ -1,6 +1,6 @@
 import requests
 from bs4 import BeautifulSoup
-from datetime import datetime, timezone
+from datetime import datetime, timezone, timedelta
 import xml.etree.ElementTree as ET
 import os
 import hashlib
@@ -77,7 +77,7 @@ for row in rows:
         title = f"{case_number} - {action_type} - {action_status} - {subject} - {action_date}"
         if title not in existing_titles:
             try:
-                date_obj = datetime.strptime(action_date, '%m/%d/%Y').replace(tzinfo=timezone.utc)
+                date_obj = datetime.strptime(action_date, '%m/%d/%Y').replace(hour=14, minute=0, tzinfo=timezone.utc)
                 print(f"Parsed date: {date_obj} for action_date: {action_date}")  # Debug statement
                 if not last_processed_date or date_obj > last_processed_date:
                     new_titles.append((title, date_obj))
