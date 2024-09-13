@@ -44,11 +44,12 @@ rows = table.find_all('tr')[1:]  # Skip the header row
 
 # Load existing feed items to avoid duplicates
 existing_titles = set()
-if os.path.exists('case_actions_feed.xml'):
-    tree = ET.parse('case_actions_feed.xml')
-    root = tree.getroot()
-    for item in root.find('channel').findall('item'):
-        existing_titles.add(item.find('title').text)
+if os.path.exists('processed_items.txt'):
+    with open('processed_items.txt', 'r') as f:
+        existing_titles = set(line.strip() for line in f)
+    print(f"Loaded {len(existing_titles)} existing titles from processed_items.txt")
+else:
+    print("processed_items.txt not found, starting fresh")
 
 new_titles = []
 for row in rows:
@@ -87,6 +88,15 @@ for title in new_titles:
 rss_feed_path = 'case_actions_feed.xml'
 tree = ET.ElementTree(rss)
 tree.write(rss_feed_path, encoding='utf-8', xml_declaration=True)
+
+# Save new titles to the processed items file
+if new_titles:
+    with open('processed_items.txt', 'a') as f:
+        for title in new_titles:
+            f.write(title + '\n')
+    print(f"Added {len(new_titles)} new titles to processed_items.txt")
+else:
+    print("No new titles to add")
 
 print("RSS feed generated successfully")
 
