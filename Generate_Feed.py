@@ -1,6 +1,6 @@
 import requests
 from bs4 import BeautifulSoup
-from datetime import datetime, timedelta, timezone
+from datetime import datetime, timezone
 import xml.etree.ElementTree as ET
 import os
 
@@ -52,14 +52,8 @@ for row in rows:
         action_status = cells[4].text.strip()
         subject = cells[5].text.strip()
         
-        # Assuming you want to filter by date (e.g., last 30 days)
-        try:
-            date_obj = datetime.strptime(action_date, '%m/%d/%Y')
-            if date_obj >= datetime.now() - timedelta(days=30):
-                title = f"{case_number} - {action_type} - {action_status} - {subject} - {action_date}"
-                filtered_titles.append((title, date_obj))
-        except ValueError:
-            continue  # Skip rows where the date format is incorrect
+        title = f"{case_number} - {action_type} - {action_status} - {subject} - {action_date}"
+        filtered_titles.append((title, action_date))
 
 # Reverse the order of filtered titles to show newest first
 filtered_titles.reverse()
@@ -84,7 +78,8 @@ ET.SubElement(channel, 'language').text = 'en-US'
 ET.SubElement(channel, 'lastBuildDate').text = datetime.now(timezone.utc).strftime('%a, %d %b %Y %H:%M:%S %z')
 ET.SubElement(channel, 'atom:link', href="https://raw.githubusercontent.com/bolzmi/CaseActions/main/case_actions_feed.xml", rel="self", type="application/rss+xml")
 
-for idx, (title, date_obj) in enumerate(filtered_titles):
+for idx, (title, action_date) in enumerate(filtered_titles):
+    date_obj = datetime.strptime(action_date, '%m/%d/%Y').replace(tzinfo=timezone.utc)
     if date_obj > last_build_date:
         item = ET.SubElement(channel, 'item')
         ET.SubElement(item, 'title').text = title
