@@ -69,8 +69,10 @@ processed_guids_file = 'processed_guids.txt'
 if os.path.exists(processed_guids_file):
     with open(processed_guids_file, 'r') as f:
         processed_guids = set(f.read().splitlines())
+    print(f"Loaded processed GUIDs from {processed_guids_file}")
 else:
     processed_guids = set()
+    print(f"No existing {processed_guids_file} found. Starting fresh.")
 
 # Step 8: Generate RSS feed manually
 rss = ET.Element('rss', version='2.0', attrib={'xmlns:atom': 'http://www.w3.org/2005/Atom'})
