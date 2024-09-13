@@ -8,6 +8,9 @@ import hashlib
 # Constants
 FEED_LIMIT = 50  # Limit the feed to the most recent 50 items
 
+# Get the password from environment variables
+password = os.getenv('PASSWORD')
+
 # Step 1: Open the login page and get the login form
 login_url = 'https://apps.occ.ok.gov/PSTPortal/Account/Login'
 session = requests.Session()
@@ -17,7 +20,7 @@ soup = BeautifulSoup(login_page.content, 'html.parser')
 # Step 2: Fill in the login form with correct field locators
 login_data = {
     'UserName': 'bolzmi@hotmail.com',
-    'Password': 'redfred4'
+    'Password': password
 }
 
 # Find the hidden input fields and add them to login_data
