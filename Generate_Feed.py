@@ -76,9 +76,13 @@ for row in rows:
         
         title = f"{case_number} - {action_type} - {action_status} - {subject} - {action_date}"
         if title not in existing_titles:
-            date_obj = datetime.strptime(action_date, '%m/%d/%Y').replace(tzinfo=timezone.utc)
-            if not last_processed_date or date_obj > last_processed_date:
-                new_titles.append((title, date_obj))
+            try:
+                date_obj = datetime.strptime(action_date, '%m/%d/%Y').replace(tzinfo=timezone.utc)
+                if not last_processed_date or date_obj > last_processed_date:
+                    new_titles.append((title, date_obj))
+            except ValueError:
+                print(f"Skipping invalid date format: {action_date}")
+                continue
 
 # Sort new titles by date
 new_titles.sort(key=lambda x: x[1], reverse=True)
