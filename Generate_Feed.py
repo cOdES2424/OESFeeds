@@ -65,9 +65,6 @@ for row in rows:
         if title not in existing_titles:
             new_titles.append(title)
 
-# Reverse the order of new titles to show newest first
-new_titles.reverse()
-
 # Step 7: Generate RSS feed manually
 rss = ET.Element('rss', version='2.0')
 channel = ET.SubElement(rss, 'channel')
@@ -99,12 +96,3 @@ else:
     print("No new titles to add")
 
 print("RSS feed generated successfully")
-
-# Step 8: Generate OPML file
-opml_content = f"""<?xml version="1.0" encoding="UTF-8"?><opml version="1.0"><head><title>Case Actions Feed</title><ownerName>OES</ownerName></head><body><outline text="Case Actions Feed" type="rss" xmlUrl="{rss_feed_path}" htmlUrl="https://apps.occ.ok.gov/LicenseePortal/CaseActions.aspx"/></body></opml>
-"""
-
-with open('case_actions_feed.opml', 'w') as f:
-    f.write(opml_content)
-
-print("OPML file generated successfully")
