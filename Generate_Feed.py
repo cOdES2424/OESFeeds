@@ -3,6 +3,10 @@ from bs4 import BeautifulSoup
 from datetime import datetime, timezone
 import xml.etree.ElementTree as ET
 import os
+import hashlib
+
+# Constants
+FEED_LIMIT = 50  # Limit the feed to the most recent 50 items
 
 # Step 1: Open the login page and get the login form
 login_url = 'https://apps.occ.ok.gov/PSTPortal/Account/Login'
@@ -51,6 +55,15 @@ if os.path.exists('processed_items.txt'):
 else:
     print("processed_items.txt not found, starting fresh")
 
+# Load the last processed date
+last_processed_date = None
+if os.path.exists('last_processed_date.txt'):
+    with open('last_processed_date.txt', 'r') as f:
+        last_processed_date = datetime.strptime(f.read().strip(), '%Y-%m-%d %H:%M:%S%z')
+    print(f"Loaded last processed date: {last_processed_date}")
+else:
+    print("last_processed_date.txt not found, starting fresh")
+
 new_titles = []
 for row in rows:
     cells = row.find_all('td')
@@ -63,10 +76,18 @@ for row in rows:
         
         title = f"{case_number} - {action_type} - {action_status} - {subject} - {action_date}"
         if title not in existing_titles:
-            new_titles.append(title)
+            date_obj = datetime.strptime(action_date, '%m/%d/%Y').replace(tzinfo=timezone.utc)
+            if not last_processed_date or date_obj > last_processed_date:
+                new_titles.append((title, date_obj))
+
+# Sort new titles by date
+new_titles.sort(key=lambda x: x[1], reverse=True)
+
+# Limit the number of items in the feed
+new_titles = new_titles[:FEED_LIMIT]
 
 # Step 7: Generate RSS feed manually
-rss = ET.Element('rss', version='2.0')
+rss = ET.Element('rss', version='2.0', nsmap={'atom': 'http://www.w3.org/2005/Atom'})
 channel = ET.SubElement(rss, 'channel')
 ET.SubElement(channel, 'title').text = 'Case Actions Feed'
 ET.SubElement(channel, 'link').text = 'https://apps.occ.ok.gov/LicenseePortal/CaseActions.aspx'
@@ -74,13 +95,23 @@ ET.SubElement(channel, 'description').text = 'Feed of case actions from the Okla
 ET.SubElement(channel, 'language').text = 'en-US'
 ET.SubElement(channel, 'lastBuildDate').text = datetime.now(timezone.utc).strftime('%a, %d %b %Y %H:%M:%S %z')
 
-for title in new_titles:
+# Add atom:link element
+atom_link = ET.SubElement(channel, '{http://www.w3.org/2005/Atom}link')
+atom_link.set('href', 'https://apps.occ.ok.gov/LicenseePortal/CaseActions.aspx')
+atom_link.set('rel', 'self')
+atom_link.set('type', 'application/rss+xml')
+
+for title, date_obj in new_titles:
     item = ET.SubElement(channel, 'item')
     ET.SubElement(item, 'title').text = title
     ET.SubElement(item, 'link').text = 'https://apps.occ.ok.gov/LicenseePortal/CaseActions.aspx'
     ET.SubElement(item, 'description').text = title
-    ET.SubElement(item, 'guid').text = title
-    ET.SubElement(item, 'pubDate').text = datetime.now(timezone.utc).strftime('%a, %d %b %Y %H:%M:%S %z')
+    
+    # Create a unique GUID using a hash
+    guid = hashlib.md5(title.encode()).hexdigest()
+    ET.SubElement(item, 'guid').text = guid
+    
+    ET.SubElement(item, 'pubDate').text = date_obj.strftime('%a, %d %b %Y %H:%M:%S %z')
 
 rss_feed_path = 'case_actions_feed.xml'
 tree = ET.ElementTree(rss)
@@ -89,10 +120,15 @@ tree.write(rss_feed_path, encoding='utf-8', xml_declaration=True)
 # Save new titles to the processed items file
 if new_titles:
     with open('processed_items.txt', 'a') as f:
-        for title in new_titles:
+        for title, _ in new_titles:
             f.write(title + '\n')
     print(f"Added {len(new_titles)} new titles to processed_items.txt")
-else:
-    print("No new titles to add")
+
+# Update the last processed date
+if new_titles:
+    latest_date = new_titles[0][1]
+    with open('last_processed_date.txt', 'w') as f:
+        f.write(latest_date.strftime('%Y-%m-%d %H:%M:%S%z'))
+    print(f"Updated last processed date to: {latest_date}")
 
 print("RSS feed generated successfully")
