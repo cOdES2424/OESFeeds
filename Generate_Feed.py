@@ -17,7 +17,7 @@ soup = BeautifulSoup(login_page.content, 'html.parser')
 # Step 2: Fill in the login form with correct field locators
 login_data = {
     'UserName': 'bolzmi@hotmail.com',
-    'Password': '${{ secrets.PASSWORD }}'
+    'Password': 'redfred4'
 }
 
 # Find the hidden input fields and add them to login_data
