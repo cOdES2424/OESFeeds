@@ -78,6 +78,7 @@ for row in rows:
         if title not in existing_titles:
             try:
                 date_obj = datetime.strptime(action_date, '%m/%d/%Y').replace(tzinfo=timezone.utc)
+                print(f"Parsed date: {date_obj} for action_date: {action_date}")  # Debug statement
                 if not last_processed_date or date_obj > last_processed_date:
                     new_titles.append((title, date_obj))
             except ValueError:
