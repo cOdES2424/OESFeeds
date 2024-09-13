@@ -95,9 +95,13 @@ for idx, title in enumerate(filtered_titles):
         new_guids.add(guid)
 
 # Step 9: Save new GUIDs to the file
-with open(processed_guids_file, 'a') as f:
-    for guid in new_guids:
-        f.write(guid + '\n')
+if new_guids:
+    with open(processed_guids_file, 'a') as f:
+        for guid in new_guids:
+            f.write(guid + '\n')
+    print(f"Processed GUIDs saved to {processed_guids_file}")
+else:
+    print("No new GUIDs to save")
 
 rss_feed_path = 'case_actions_feed.xml'
 tree = ET.ElementTree(rss)
