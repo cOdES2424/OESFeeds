@@ -2,6 +2,7 @@ import requests
 from bs4 import BeautifulSoup
 from datetime import datetime, timedelta, timezone
 import xml.etree.ElementTree as ET
+import os
 
 # Step 1: Open the login page and get the login form
 login_url = 'https://apps.occ.ok.gov/PSTPortal/Account/Login'
@@ -63,7 +64,15 @@ for row in rows:
 # Reverse the order of filtered titles to show newest first
 filtered_titles.reverse()
 
-# Step 7: Generate RSS feed manually
+# Step 7: Load processed GUIDs
+processed_guids_file = 'processed_guids.txt'
+if os.path.exists(processed_guids_file):
+    with open(processed_guids_file, 'r') as f:
+        processed_guids = set(f.read().splitlines())
+else:
+    processed_guids = set()
+
+# Step 8: Generate RSS feed manually
 rss = ET.Element('rss', version='2.0', attrib={'xmlns:atom': 'http://www.w3.org/2005/Atom'})
 channel = ET.SubElement(rss, 'channel')
 ET.SubElement(channel, 'title').text = 'Case Actions Feed'
@@ -73,13 +82,22 @@ ET.SubElement(channel, 'language').text = 'en-US'
 ET.SubElement(channel, 'lastBuildDate').text = datetime.now(timezone.utc).strftime('%a, %d %b %Y %H:%M:%S %z')
 ET.SubElement(channel, 'atom:link', href="https://raw.githubusercontent.com/bolzmi/CaseActions/main/case_actions_feed.xml", rel="self", type="application/rss+xml")
 
+new_guids = set()
 for idx, title in enumerate(filtered_titles):
-    item = ET.SubElement(channel, 'item')
-    ET.SubElement(item, 'title').text = title
-    ET.SubElement(item, 'link').text = 'https://apps.occ.ok.gov/LicenseePortal/CaseActions.aspx'
-    ET.SubElement(item, 'description').text = title
-    ET.SubElement(item, 'guid').text = f"unique-identifier-{idx}"
-    ET.SubElement(item, 'pubDate').text = datetime.now(timezone.utc).strftime('%a, %d %b %Y %H:%M:%S %z')
+    guid = f"unique-identifier-{idx}"
+    if guid not in processed_guids:
+        item = ET.SubElement(channel, 'item')
+        ET.SubElement(item, 'title').text = title
+        ET.SubElement(item, 'link').text = 'https://apps.occ.ok.gov/LicenseePortal/CaseActions.aspx'
+        ET.SubElement(item, 'description').text = title
+        ET.SubElement(item, 'guid').text = guid
+        ET.SubElement(item, 'pubDate').text = datetime.now(timezone.utc).strftime('%a, %d %b %Y %H:%M:%S %z')
+        new_guids.add(guid)
+
+# Step 9: Save new GUIDs to the file
+with open(processed_guids_file, 'a') as f:
+    for guid in new_guids:
+        f.write(guid + '\n')
 
 rss_feed_path = 'case_actions_feed.xml'
 tree = ET.ElementTree(rss)
@@ -87,7 +105,7 @@ tree.write(rss_feed_path, encoding='utf-8', xml_declaration=True)
 
 print("RSS feed generated successfully")
 
-# Step 8: Generate OPML file
+# Step 10: Generate OPML file
 opml_content = f"""<?xml version="1.0" encoding="UTF-8"?>
 <opml version="1.0">
   <head>
