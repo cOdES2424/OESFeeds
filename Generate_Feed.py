@@ -77,7 +77,9 @@ for row in rows:
         title = f"{case_number} - {action_type} - {action_status} - {subject} - {action_date}"
         if title not in existing_titles:
             try:
-                date_obj = datetime.strptime(action_date, '%m/%d/%Y').replace(hour=14, minute=0, tzinfo=timezone.utc)
+                # Parse the date and convert to CST
+                date_obj = datetime.strptime(action_date, '%m/%d/%Y')
+                date_obj = date_obj.replace(tzinfo=timezone.utc).astimezone(timezone(timedelta(hours=-6)))  # CST
                 print(f"Parsed date: {date_obj} for action_date: {action_date}")  # Debug statement
                 if not last_processed_date or date_obj > last_processed_date:
                     new_titles.append((title, date_obj))
@@ -85,7 +87,7 @@ for row in rows:
                 print(f"Skipping invalid date format: {action_date}")
                 continue
 
-# Sort new titles by date
+# Sort new titles by date (newest first)
 new_titles.sort(key=lambda x: x[1], reverse=True)
 
 # Limit the number of items in the feed
