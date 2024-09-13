@@ -64,7 +64,7 @@ for row in rows:
 filtered_titles.reverse()
 
 # Step 7: Generate RSS feed manually
-rss = ET.Element('rss', version='2.0', xmlns_atom="http://www.w3.org/2005/Atom")
+rss = ET.Element('rss', version='2.0', attrib={'xmlns:atom': 'http://www.w3.org/2005/Atom'})
 channel = ET.SubElement(rss, 'channel')
 ET.SubElement(channel, 'title').text = 'Case Actions Feed'
 ET.SubElement(channel, 'link').text = 'https://apps.occ.ok.gov/LicenseePortal/CaseActions.aspx'
