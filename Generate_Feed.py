@@ -108,6 +108,10 @@ atom_link.set('href', 'https://apps.occ.ok.gov/LicenseePortal/CaseActions.aspx')
 atom_link.set('rel', 'self')
 atom_link.set('type', 'application/rss+xml')
 
+# Add update schedule recommendation
+ET.SubElement(channel, 'sy:updatePeriod').text = 'hourly'
+ET.SubElement(channel, 'sy:updateFrequency').text = '1'
+
 for title, date_obj in new_titles:
     item = ET.SubElement(channel, 'item')
     ET.SubElement(item, 'title').text = title
