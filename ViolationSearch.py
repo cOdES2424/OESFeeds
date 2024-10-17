@@ -40,7 +40,8 @@ search_data = {
     'DateRangeTo': date_14_days_ago,
     'btnSubmitDateSearch': 'Search by Date Range'
 }
-search_result = session.post(target_url, data=search_data)
+search_url = 'https://apps.occ.ok.gov/PSTPortal/PublicImaging/Search'
+search_result = session.post(search_url, data=search_data)
 print('Search form submitted')
 soup = BeautifulSoup(search_result.content, 'html.parser')
 
@@ -69,7 +70,7 @@ page_number = 1
 while True:
     next_button = soup.find('button', {'id': 'nextPage'})
     if next_button and 'disabled' not in next_button.get('class', ''):
-        next_page_url = f'https://apps.occ.ok.gov/PSTPortal/PublicImaging/Home#SearchByDate&pageNumber={page_number}'
+        next_page_url = f'https://apps.occ.ok.gov/PSTPortal/PublicImaging/Search?pageNumber={page_number}'
         search_result = session.get(next_page_url)
         soup = BeautifulSoup(search_result.content, 'html.parser')
         results.extend(scrape_current_page(soup))
@@ -103,4 +104,4 @@ rss_feed_path = os.path.join(os.getcwd(), 'violation_search_feed.xml')
 tree = ET.ElementTree(rss)
 tree.write(rss_feed_path, encoding='utf-8', xml_declaration=True)
 
-print(f"RSS feed generated successfully at {rss_feed_path}")
+print(f"RSS feed generated successfully
