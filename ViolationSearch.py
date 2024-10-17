@@ -38,6 +38,7 @@ soup = BeautifulSoup(response.content, 'html.parser')
 
 # Step 5: Scrape data from the specific table and handle pagination
 def scrape_current_page(soup):
+    print('Scraping current page...')
     table = soup.find('table', {'id': 'tablePublicImagingSearchResults'})
     table_rows = table.find_all('tr', class_=lambda x: x in ['odd', 'even'])
     results = []
@@ -51,6 +52,7 @@ def scrape_current_page(soup):
             }
             if any(keyword in entry['description'] for keyword in ['NOV', 'NOCR', 'SOR']):
                 results.append(entry)
+    print(f'Page results: {results}')
     return results
 
 results = scrape_current_page(soup)
@@ -59,16 +61,19 @@ print(f'Initial data scraped: {results}')
 # Handle pagination
 page_number = 1
 while True:
+    print(f'Checking for next page (page {page_number})...')
     next_button = soup.find('button', {'id': 'nextPage'})
     if next_button and 'disabled' not in next_button.get('class', ''):
         next_page_url = f'https://apps.occ.ok.gov/PSTPortal/PublicImaging/Home?indexName=DateRange&DateRangeFrom={date_14_days_ago}&DateRangeTo={date_14_days_ago}&btnSubmitDateSearch=Search+by+Date+Range&pageNumber={page_number}'
         search_result = session.get(next_page_url)
         time.sleep(10)
         soup = BeautifulSoup(search_result.content, 'html.parser')
-        results.extend(scrape_current_page(soup))
+        page_results = scrape_current_page(soup)
+        results.extend(page_results)
         print(f'Data after pagination: {results}')
         page_number += 1
     else:
+        print('No more pages or pagination button disabled.')
         break
 
 # Step 6: Generate RSS feed
