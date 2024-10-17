@@ -4,6 +4,7 @@ from datetime import datetime, timezone, timedelta
 import xml.etree.ElementTree as ET
 import os
 import hashlib
+import time
 
 # Step 1: Open the login page and get the login form
 login_url = 'https://apps.occ.ok.gov/PSTPortal/Account/Login'
@@ -41,6 +42,7 @@ search_data = {
     'btnSubmitDateSearch': 'Search by Date Range'
 }
 search_result = session.post(target_url, data=search_data)
+time.sleep(10)
 print('Search form submitted')
 soup = BeautifulSoup(search_result.content, 'html.parser')
 
@@ -71,6 +73,7 @@ while True:
     if next_button and 'disabled' not in next_button.get('class', ''):
         next_page_url = f'https://apps.occ.ok.gov/PSTPortal/PublicImaging/Home#SearchByDate&pageNumber={page_number}'
         search_result = session.get(next_page_url)
+        time.sleep(10)
         soup = BeautifulSoup(search_result.content, 'html.parser')
         results.extend(scrape_current_page(soup))
         print(f'Data after pagination: {results}')
