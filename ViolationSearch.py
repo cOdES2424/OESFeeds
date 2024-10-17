@@ -38,8 +38,8 @@ soup = BeautifulSoup(response.content, 'html.parser')
 
 # Step 5: Scrape data from the specific table and handle pagination
 def scrape_current_page(soup):
-    print(soup.prettify())  # Print the entire page content for debugging
-    table_rows = soup.select('table#tablePublicImagingSearchResults tr')
+    table = soup.find('table', {'id': 'tablePublicImagingSearchResults'})
+    table_rows = table.find_all('tr', class_=lambda x: x in ['odd', 'even'])
     results = []
     for row in table_rows:
         columns = row.find_all('td')
