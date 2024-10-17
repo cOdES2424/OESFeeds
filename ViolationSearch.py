@@ -28,28 +28,23 @@ session.post(login_url, data=login_data)
 print('Logged in successfully')
 
 # Step 4: Navigate to the target page
-target_url = 'https://apps.occ.ok.gov/PSTPortal/PublicImaging/Home'
+date_14_days_ago = (datetime.now() - timedelta(days=14)).strftime('%m/%d/%Y')
+target_url = f'https://apps.occ.ok.gov/PSTPortal/PublicImaging/Home#SearchByDate'
 response = session.get(target_url)
 print('Navigated to target page')
 soup = BeautifulSoup(response.content, 'html.parser')
 
-# Step 5: Click the "Search by Date Range" tab
-search_by_date_url = 'https://apps.occ.ok.gov/PSTPortal/PublicImaging/SearchByDateRange'
-session.get(search_by_date_url)
-print('Clicked "Search by Date Range" tab')
-
-# Step 6: Set the date range and submit the search form
-date_14_days_ago = (datetime.now() - timedelta(days=14)).strftime('%m/%d/%Y')
+# Step 5: Set the date range and submit the search form
 search_data = {
     'DateRangeFrom': date_14_days_ago,
     'DateRangeTo': date_14_days_ago,
     'btnSubmitDateSearch': 'Search by Date Range'
 }
-search_result = session.post(search_by_date_url, data=search_data)
+search_result = session.post(target_url, data=search_data)
 print('Search form submitted')
 soup = BeautifulSoup(search_result.content, 'html.parser')
 
-# Step 7: Scrape data and handle pagination
+# Step 6: Scrape data and handle pagination
 def scrape_current_page(soup):
     print(soup.prettify())  # Print the entire page content for debugging
     table_rows = soup.select('table#tablePublicImagingSearchResults tr')
@@ -73,15 +68,16 @@ print(f'Initial data scraped: {results}')
 while True:
     next_button = soup.find('button', {'id': 'nextPage'})
     if next_button and 'disabled' not in next_button.get('class', ''):
-        next_page_url = 'https://apps.occ.ok.gov/PSTPortal/PublicImaging/SearchByDateRange'  # Adjust if necessary
-        search_result = session.post(next_page_url, data=search_data)
+        next_page_number = int(next_button.get('data-page-number')) + 1
+        next_page_url = f'https://apps.occ.ok.gov/PSTPortal/PublicImaging/Home#SearchByDate&pageNumber={next_page_number}'
+        search_result = session.get(next_page_url)
         soup = BeautifulSoup(search_result.content, 'html.parser')
         results.extend(scrape_current_page(soup))
         print(f'Data after pagination: {results}')
     else:
         break
 
-# Step 8: Generate RSS feed
+# Step 7: Generate RSS feed
 rss = ET.Element('rss', version='2.0')
 channel = ET.SubElement(rss, 'channel')
 ET.SubElement(channel, 'title').text = 'Violation Search Feed'
