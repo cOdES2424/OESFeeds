@@ -1,6 +1,6 @@
 import requests
 from bs4 import BeautifulSoup
-from datetime import datetime, timezone, timedelta
+from datetime import datetime, timedelta
 import xml.etree.ElementTree as ET
 import os
 import hashlib
@@ -27,20 +27,16 @@ for hidden_input in hidden_inputs:
 session.post(login_url, data=login_data)
 print('Logged in successfully')
 
-# Step 4: Navigate to the target page
-date_14_days_ago = (datetime.now() - timedelta(days=14)).strftime('%m/%d/%Y')
-target_url = f'https://apps.occ.ok.gov/PSTPortal/PublicImaging/Home#SearchByDate'
+# Step 4: Navigate to the search page
+target_url = 'https://apps.occ.ok.gov/PSTPortal/PublicImaging/Home#SearchByDate'
 response = session.get(target_url)
 print('Navigated to target page')
 soup = BeautifulSoup(response.content, 'html.parser')
 
 # Step 5: Set the date range and submit the search form
-search_data = {
-    'DateRangeFrom': date_14_days_ago,
-    'DateRangeTo': date_14_days_ago,
-    'btnSubmitDateSearch': 'Search by Date Range'
-}
-search_result = session.post(target_url, data=search_data)
+date_14_days_ago = (datetime.now() - timedelta(days=14)).strftime('%m/%d/%Y')
+search_url = f'https://apps.occ.ok.gov/PSTPortal/PublicImaging/SearchByDateRange?indexName=DateRange&DateRangeFrom={date_14_days_ago}&DateRangeTo={date_14_days_ago}&btnSubmitDateSearch=Search+by+Date+Range&pageNumber=0#SearchByDate'
+search_result = session.get(search_url)
 print('Search form submitted')
 soup = BeautifulSoup(search_result.content, 'html.parser')
 
@@ -65,15 +61,16 @@ results = scrape_current_page(soup)
 print(f'Initial data scraped: {results}')
 
 # Handle pagination
+page_number = 1
 while True:
     next_button = soup.find('button', {'id': 'nextPage'})
     if next_button and 'disabled' not in next_button.get('class', ''):
-        next_page_number = int(next_button.get('data-page-number')) + 1
-        next_page_url = f'https://apps.occ.ok.gov/PSTPortal/PublicImaging/Home#SearchByDate&pageNumber={next_page_number}'
+        next_page_url = f'https://apps.occ.ok.gov/PSTPortal/PublicImaging/SearchByDateRange?indexName=DateRange&DateRangeFrom={date_14_days_ago}&DateRangeTo={date_14_days_ago}&btnSubmitDateSearch=Search+by+Date+Range&pageNumber={page_number}#SearchByDate'
         search_result = session.get(next_page_url)
         soup = BeautifulSoup(search_result.content, 'html.parser')
         results.extend(scrape_current_page(soup))
         print(f'Data after pagination: {results}')
+        page_number += 1
     else:
         break
 
