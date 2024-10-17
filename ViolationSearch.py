@@ -28,7 +28,7 @@ for hidden_input in hidden_inputs:
 session.post(login_url, data=login_data)
 print('Logged in successfully')
 
-# Step 4: Navigate to the target page with the search parameters
+# Step 4: Navigate to the target page with search parameters
 date_14_days_ago = (datetime.now() - timedelta(days=14)).strftime('%m/%d/%Y')
 target_url = f'https://apps.occ.ok.gov/PSTPortal/PublicImaging/Home?indexName=DateRange&DateRangeFrom={date_14_days_ago}&DateRangeTo={date_14_days_ago}&btnSubmitDateSearch=Search+by+Date+Range&pageNumber=0'
 response = session.get(target_url)
@@ -36,7 +36,7 @@ time.sleep(10)
 print('Navigated to target page')
 soup = BeautifulSoup(response.content, 'html.parser')
 
-# Step 5: Scrape data and handle pagination
+# Step 5: Scrape data from the specific table and handle pagination
 def scrape_current_page(soup):
     print(soup.prettify())  # Print the entire page content for debugging
     table_rows = soup.select('table#tablePublicImagingSearchResults tr')
