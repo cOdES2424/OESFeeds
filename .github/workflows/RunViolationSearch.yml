@@ -4,6 +4,7 @@ on:
   push:
     branches:
       - main
+  workflow_dispatch:
 
 jobs:
   run-script:
@@ -20,8 +21,8 @@ jobs:
 
     - name: Install dependencies
       run: |
-        pip install requests beautifulsoup4 lxml selenium webdriver-manager
+        python -m pip install --upgrade pip
+        pip install requests beautifulsoup4 selenium webdriver-manager
 
-    - name: Run your script
-      run: |
-        python ViolationSearch.py
+    - name: Run the script
+      run: python ViolationSearch.py
