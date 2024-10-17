@@ -1,10 +1,10 @@
 from selenium import webdriver
 from selenium.webdriver.chrome.service import Service
-from webdriver_manager.chrome import ChromeDriverManager
 from selenium.webdriver.chrome.options import Options
 from selenium.webdriver.common.by import By
 from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
+from webdriver_manager.chrome import ChromeDriverManager
 from selenium.common.exceptions import NoSuchElementException
 
 # Set up headless Chrome options
@@ -24,13 +24,19 @@ username = driver.find_element(By.NAME, 'UserName')
 password = driver.find_element(By.NAME, 'Password')
 username.send_keys('bolzmi@hotmail.com')
 password.send_keys('redfred4')
-submit_button = driver.find_element(By.XPATH, '//button[@type="submit"]')
+
+# Wait for the submit button to be clickable, then click
+submit_button = WebDriverWait(driver, 10).until(
+    EC.element_to_be_clickable((By.XPATH, '//button[@type="submit"]'))
+)
 submit_button.click()
 
 # Step 3: Navigate to the target page
 target_url = 'https://apps.occ.ok.gov/PSTPortal/PublicImaging/Home'
 driver.get(target_url)
-search_by_date_tab = WebDriverWait(driver, 10).until(EC.element_to_be_clickable((By.XPATH, '//a[@href="#SearchByDate"]')))
+search_by_date_tab = WebDriverWait(driver, 10).until(
+    EC.element_to_be_clickable((By.XPATH, '//a[@href="#SearchByDate"]'))
+)
 search_by_date_tab.click()
 
 # Step 4: Set the date range
