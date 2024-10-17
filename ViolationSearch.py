@@ -51,13 +51,19 @@ soup = BeautifulSoup(search_result.content, 'html.parser')
 
 # Step 7: Scrape data and handle pagination
 def scrape_current_page(soup):
+    print(soup.prettify())  # Print the entire page content for debugging
     table_rows = soup.select('table#tablePublicImagingSearchResults tr')
     results = []
     for row in table_rows:
         columns = row.find_all('td')
-        data = [col.text.strip() for col in columns]
-        if any(keyword in data for keyword in ['NOV', 'NOCR', 'SOR']):
-            results.append(data)
+        if columns and len(columns) > 3:
+            entry = {
+                'id': columns[1].text.strip(),
+                'description': columns[2].text.strip(),
+                'date': columns[3].text.strip()
+            }
+            if any(keyword in entry['description'] for keyword in ['NOV', 'NOCR', 'SOR']):
+                results.append(entry)
     return results
 
 results = scrape_current_page(soup)
@@ -84,14 +90,14 @@ ET.SubElement(channel, 'description').text = 'Feed of violations from the Oklaho
 ET.SubElement(channel, 'language').text = 'en-US'
 ET.SubElement(channel, 'lastBuildDate').text = datetime.now(timezone.utc).strftime('%a, %d %b %Y %H:%M:%S %z')
 
-for data in results:
+for entry in results:
     item = ET.SubElement(channel, 'item')
-    ET.SubElement(item, 'title').text = ' - '.join(data)
+    ET.SubElement(item, 'title').text = f"{entry['id']} - {entry['description']} - {entry['date']}"
     ET.SubElement(item, 'link').text = 'https://apps.occ.ok.gov/PSTPortal/PublicImaging/Home'
-    ET.SubElement(item, 'description').text = ' - '.join(data)
-    guid = hashlib.md5(' - '.join(data).encode()).hexdigest()
+    ET.SubElement(item, 'description').text = f"{entry['id']} - {entry['description']} - {entry['date']}"
+    guid = hashlib.md5(f"{entry['id']} - {entry['description']} - {entry['date']}".encode()).hexdigest()
     ET.SubElement(item, 'guid').text = guid
-    date_obj = datetime.strptime(data[-1], '%m/%d/%Y')
+    date_obj = datetime.strptime(entry['date'], '%m/%d/%Y')
     date_obj = date_obj.replace(tzinfo=timezone.utc)
     ET.SubElement(item, 'pubDate').text = date_obj.strftime('%a, %d %b %Y %H:%M:%S %z')
 
