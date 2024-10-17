@@ -1,19 +1,21 @@
-import requests
-from bs4 import BeautifulSoup
-from datetime import datetime, timezone, timedelta
-import xml.etree.ElementTree as ET
-import os
-import hashlib
 from selenium import webdriver
+from selenium.webdriver.chrome.service import Service
+from webdriver_manager.chrome import ChromeDriverManager
+from selenium.webdriver.chrome.options import Options
 from selenium.webdriver.common.by import By
 from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
-from selenium.webdriver.chrome.service import Service
-from webdriver_manager.chrome import ChromeDriverManager
 from selenium.common.exceptions import NoSuchElementException
 
-# Step 1: Initialize the webdriver
-driver = webdriver.Chrome(service=Service(ChromeDriverManager().install()))
+# Set up headless Chrome options
+chrome_options = Options()
+chrome_options.add_argument("--headless")
+chrome_options.add_argument("--disable-gpu")
+chrome_options.add_argument("--no-sandbox")
+chrome_options.add_argument("--disable-dev-shm-usage")
+
+# Initialize the webdriver with options
+driver = webdriver.Chrome(service=Service(ChromeDriverManager().install()), options=chrome_options)
 
 # Step 2: Login using Selenium
 login_url = 'https://apps.occ.ok.gov/PSTPortal/Account/Login'
@@ -64,9 +66,6 @@ while True:
         scrape_current_page()
     except NoSuchElementException:
         break
-
-# Step 6: Parse and filter data to generate RSS feed
-# (Reuse your existing parsing and RSS generation code here)
 
 # Shutdown the driver
 driver.quit()
