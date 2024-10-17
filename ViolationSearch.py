@@ -88,7 +88,8 @@ for data in results:
     date_obj = date_obj.replace(tzinfo=timezone.utc)
     ET.SubElement(item, 'pubDate').text = date_obj.strftime('%a, %d %b %Y %H:%M:%S %z')
 
-rss_feed_path = 'violation_search_feed.xml'
+# Define the path to the main directory
+rss_feed_path = os.path.join(os.getcwd(), 'violation_search_feed.xml')
 tree = ET.ElementTree(rss)
 tree.write(rss_feed_path, encoding='utf-8', xml_declaration=True)
 
