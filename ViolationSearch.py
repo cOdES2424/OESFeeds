@@ -1,6 +1,6 @@
 import requests
 from bs4 import BeautifulSoup
-from datetime import datetime, timedelta
+from datetime import datetime, timezone, timedelta
 import xml.etree.ElementTree as ET
 import os
 import hashlib
@@ -27,7 +27,7 @@ for hidden_input in hidden_inputs:
 session.post(login_url, data=login_data)
 print('Logged in successfully')
 
-# Step 4: Navigate to the search page
+# Step 4: Navigate to the target page
 target_url = 'https://apps.occ.ok.gov/PSTPortal/PublicImaging/Home#SearchByDate'
 response = session.get(target_url)
 print('Navigated to target page')
@@ -35,8 +35,12 @@ soup = BeautifulSoup(response.content, 'html.parser')
 
 # Step 5: Set the date range and submit the search form
 date_14_days_ago = (datetime.now() - timedelta(days=14)).strftime('%m/%d/%Y')
-search_url = f'https://apps.occ.ok.gov/PSTPortal/PublicImaging/SearchByDateRange?indexName=DateRange&DateRangeFrom={date_14_days_ago}&DateRangeTo={date_14_days_ago}&btnSubmitDateSearch=Search+by+Date+Range&pageNumber=0#SearchByDate'
-search_result = session.get(search_url)
+search_data = {
+    'DateRangeFrom': date_14_days_ago,
+    'DateRangeTo': date_14_days_ago,
+    'btnSubmitDateSearch': 'Search by Date Range'
+}
+search_result = session.post(target_url, data=search_data)
 print('Search form submitted')
 soup = BeautifulSoup(search_result.content, 'html.parser')
 
@@ -65,7 +69,7 @@ page_number = 1
 while True:
     next_button = soup.find('button', {'id': 'nextPage'})
     if next_button and 'disabled' not in next_button.get('class', ''):
-        next_page_url = f'https://apps.occ.ok.gov/PSTPortal/PublicImaging/SearchByDateRange?indexName=DateRange&DateRangeFrom={date_14_days_ago}&DateRangeTo={date_14_days_ago}&btnSubmitDateSearch=Search+by+Date+Range&pageNumber={page_number}#SearchByDate'
+        next_page_url = f'https://apps.occ.ok.gov/PSTPortal/PublicImaging/Home#SearchByDate&pageNumber={page_number}'
         search_result = session.get(next_page_url)
         soup = BeautifulSoup(search_result.content, 'html.parser')
         results.extend(scrape_current_page(soup))
@@ -100,4 +104,3 @@ tree = ET.ElementTree(rss)
 tree.write(rss_feed_path, encoding='utf-8', xml_declaration=True)
 
 print(f"RSS feed generated successfully at {rss_feed_path}")
-
