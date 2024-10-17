@@ -9,6 +9,7 @@ import hashlib
 login_url = 'https://apps.occ.ok.gov/PSTPortal/Account/Login'
 session = requests.Session()
 login_page = session.get(login_url)
+print('Login page fetched')
 soup = BeautifulSoup(login_page.content, 'html.parser')
 
 # Step 2: Fill in the login form with correct field locators
@@ -24,15 +25,18 @@ for hidden_input in hidden_inputs:
 
 # Step 3: Submit the login form
 session.post(login_url, data=login_data)
+print('Logged in successfully')
 
 # Step 4: Navigate to the target page
 target_url = 'https://apps.occ.ok.gov/PSTPortal/PublicImaging/Home'
 response = session.get(target_url)
+print('Navigated to target page')
 soup = BeautifulSoup(response.content, 'html.parser')
 
 # Step 5: Click the "Search by Date Range" tab
 search_by_date_url = 'https://apps.occ.ok.gov/PSTPortal/PublicImaging/SearchByDateRange'
 session.get(search_by_date_url)
+print('Clicked "Search by Date Range" tab')
 
 # Step 6: Set the date range and submit the search form
 date_14_days_ago = (datetime.now() - timedelta(days=14)).strftime('%m/%d/%Y')
@@ -42,6 +46,7 @@ search_data = {
     'btnSubmitDateSearch': 'Search by Date Range'
 }
 search_result = session.post(search_by_date_url, data=search_data)
+print('Search form submitted')
 soup = BeautifulSoup(search_result.content, 'html.parser')
 
 # Step 7: Scrape data and handle pagination
@@ -56,6 +61,7 @@ def scrape_current_page(soup):
     return results
 
 results = scrape_current_page(soup)
+print(f'Initial data scraped: {results}')
 
 # Handle pagination
 while True:
@@ -65,6 +71,7 @@ while True:
         search_result = session.post(next_page_url, data=search_data)
         soup = BeautifulSoup(search_result.content, 'html.parser')
         results.extend(scrape_current_page(soup))
+        print(f'Data after pagination: {results}')
     else:
         break
 
