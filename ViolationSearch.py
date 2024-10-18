@@ -62,7 +62,7 @@ def scrape_data(page_number):
     if table:
         tbody = table.find('tbody')
         rows = tbody.find_all('tr') if tbody else []
-        
+
         # Process each row
         for row in rows:
             columns = row.find_all('td')
@@ -108,7 +108,7 @@ for entry in all_results:
     date_obj = date_obj.replace(tzinfo=timezone.utc)
     ET.SubElement(item, 'pubDate').text = date_obj.strftime('%a, %d %b %Y %H:%M:%S %z')
 
-# Define the path to the main directory
+# Define the path to the root directory of your GitHub repository
 main_directory = os.path.join(os.path.dirname(__file__), 'violation_search_feed.xml')
 tree = ET.ElementTree(rss)
 tree.write(main_directory, encoding='utf-8', xml_declaration=True)
