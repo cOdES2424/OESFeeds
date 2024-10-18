@@ -33,6 +33,7 @@ def scrape_data(page_number):
     date_14_days_ago = (datetime.now() - timedelta(days=14)).strftime('%m/%d/%Y')
     url = f'https://apps.occ.ok.gov/PSTPortal/PublicImaging/Home?indexName=DateRange&DateRangeFrom={date_14_days_ago}&DateRangeTo={date_14_days_ago}&btnSubmitDateSearch=Search+by+Date+Range&pageNumber={page_number}'
     response = session.get(url)
+    time.sleep(5)  # Ensure page loads fully
     print(f'Navigated to page {page_number}')
     soup = BeautifulSoup(response.content, 'html.parser')
 
@@ -77,13 +78,18 @@ while True:
 print(f'Total data scraped: {all_results}')
 
 # Step 5: Generate RSS feed
-rss = ET.Element('rss', version='2.0')
+rss = ET.Element('rss', version='2.0', nsmap={'atom': 'http://www.w3.org/2005/Atom'})
 channel = ET.SubElement(rss, 'channel')
 ET.SubElement(channel, 'title').text = 'Violation Search Feed'
 ET.SubElement(channel, 'link').text = 'https://apps.occ.ok.gov/PSTPortal/PublicImaging/Home'
 ET.SubElement(channel, 'description').text = 'Feed of violations from the Oklahoma Corporation Commission'
 ET.SubElement(channel, 'language').text = 'en-US'
 ET.SubElement(channel, 'lastBuildDate').text = datetime.now(timezone.utc).strftime('%a, %d %b %Y %H:%M:%S %z')
+# Add atom:link element
+atom_link = ET.SubElement(channel, '{http://www.w3.org/2005/Atom}link')
+atom_link.set('href', 'https://apps.occ.ok.gov/PSTPortal/PublicImaging/Home')
+atom_link.set('rel', 'self')
+atom_link.set('type', 'application/rss+xml')
 
 for entry in all_results:
     item = ET.SubElement(channel, 'item')
@@ -97,8 +103,7 @@ for entry in all_results:
     ET.SubElement(item, 'pubDate').text = date_obj.strftime('%a, %d %b %Y %H:%M:%S %z')
 
 # Save to main directory
-current_directory = os.getcwd()
-rss_feed_path = os.path.join(current_directory, 'violation_search_feed.xml')
+rss_feed_path = 'violation_search_feed.xml'
 tree = ET.ElementTree(rss)
 tree.write(rss_feed_path, encoding='utf-8', xml_declaration=True)
 
