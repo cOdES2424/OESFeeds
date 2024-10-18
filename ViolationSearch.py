@@ -93,8 +93,7 @@ for entry in all_results:
     ET.SubElement(item, 'pubDate').text = date_obj.strftime('%a, %d %b %Y %H:%M:%S %z')
 
 # Save to main directory
-current_directory = os.getcwd()
-rss_feed_path = os.path.join(current_directory, 'violation_search_feed.xml')
+rss_feed_path = 'violation_search_feed.xml'
 tree = ET.ElementTree(rss)
 tree.write(rss_feed_path, encoding='utf-8', xml_declaration=True)
 
