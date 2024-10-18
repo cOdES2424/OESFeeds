@@ -1,6 +1,6 @@
 import requests
 from bs4 import BeautifulSoup
-from datetime import datetime, timezone, timedelta
+from datetime import datetime, timedelta, timezone
 import xml.etree.ElementTree as ET
 import os
 import hashlib
@@ -64,11 +64,16 @@ def scrape_data(page_number):
     return results
 
 all_results = []
-# Loop through the first 6 pages
-for page in range(6):
+page = 0
+
+# Loop through pages until no more data is found
+while True:
     page_results = scrape_data(page)
+    if not page_results:
+        break
     all_results.extend(page_results)
-    time.sleep(5)  # Wait between page requests to avoid rate limiting
+    page += 1
+    time.sleep(10)  # Wait between page requests to avoid rate limiting
 
 print(f'Total data scraped: {all_results}')
 
@@ -92,7 +97,7 @@ for entry in all_results:
     date_obj = date_obj.replace(tzinfo=timezone.utc)
     ET.SubElement(item, 'pubDate').text = date_obj.strftime('%a, %d %b %Y %H:%M:%S %z')
 
-# Define the path to the main directory
+# Save to main directory
 rss_feed_path = os.path.join(os.getcwd(), 'violation_search_feed.xml')
 tree = ET.ElementTree(rss)
 tree.write(rss_feed_path, encoding='utf-8', xml_declaration=True)
