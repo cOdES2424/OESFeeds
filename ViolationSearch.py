@@ -1,6 +1,6 @@
 import requests
 from bs4 import BeautifulSoup
-from datetime import datetime, timedelta
+from datetime import datetime, timezone, timedelta
 
 # Step 1: Open the login page and get the login form
 login_url = 'https://apps.occ.ok.gov/PSTPortal/Account/Login'
@@ -38,7 +38,7 @@ print(f'Table found: {table is not None}')
 # If table is found, print the first few rows for verification
 if table:
     tbody = table.find('tbody')
-    rows = tbody.find_all('tr', {'role': 'row'}) if tbody else []
+    rows = tbody.find_all('tr', class_=lambda x: x in ['odd', 'even']) if tbody else []
     for row in rows[:3]:  # Print first 3 rows
         columns = row.find_all('td')
         print(f'Row columns: {[col.text.strip() for col in columns]}')
