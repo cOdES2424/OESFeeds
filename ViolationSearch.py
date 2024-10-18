@@ -10,6 +10,11 @@ import time
 login_url = 'https://apps.occ.ok.gov/PSTPortal/Account/Login'
 session = requests.Session()
 login_page = session.get(login_url)
+
+if login_page.status_code != 200:
+    print('Failed to fetch login page')
+    exit()
+
 print('Login page fetched')
 soup = BeautifulSoup(login_page.content, 'html.parser')
 
@@ -25,14 +30,27 @@ for hidden_input in hidden_inputs:
     login_data[hidden_input['name']] = hidden_input['value']
 
 # Step 3: Submit the login form
-session.post(login_url, data=login_data)
+response = session.post(login_url, data=login_data)
+
+if response.status_code != 200:
+    print('Login failed')
+    exit()
+
 print('Logged in successfully')
 
 # Step 4: Function to navigate pages and scrape data
 def scrape_data(page_number):
     date_14_days_ago = (datetime.now() - timedelta(days=14)).strftime('%m/%d/%Y')
-    url = f'https://apps.occ.ok.gov/PSTPortal/PublicImaging/Home?indexName=DateRange&DateRangeFrom={date_14_days_ago}&DateRangeTo={date_14_days_ago}&btnSubmitDateSearch=Search+by+Date+Range&pageNumber={page_number}'
+    url = (f'https://apps.occ.ok.gov/PSTPortal/PublicImaging/Home?indexName=DateRange'
+           f'&DateRangeFrom={date_14_days_ago}&DateRangeTo={date_14_days_ago}'
+           f'&btnSubmitDateSearch=Search+by+Date+Range&pageNumber={page_number}')
+    
     response = session.get(url)
+
+    if response.status_code != 200:
+        print(f'Failed to navigate to page {page_number}')
+        return []
+
     print(f'Navigated to page {page_number}')
     soup = BeautifulSoup(response.content, 'html.parser')
 
@@ -44,16 +62,14 @@ def scrape_data(page_number):
     if table:
         tbody = table.find('tbody')
         rows = tbody.find_all('tr') if tbody else []
-        for row in rows[:3]:  # Print first 3 rows
-            columns = row.find_all('td')
-            print(f'Row columns: {[col.text.strip() for col in columns]}')
-
+        
+        # Process each row
         for row in rows:
             columns = row.find_all('td')
-            if columns and len(columns) > 3:
+            if len(columns) > 3:
                 description = columns[2].text.strip()
                 print(f'Description: {description}')  # Debug column content
-                if 'NOV' in description or 'NOCR' in description or 'SOR' in description:
+                if any(keyword in description for keyword in ['NOV', 'NOCR', 'SOR']):
                     entry = {
                         'id': columns[1].text.strip(),
                         'description': description,
@@ -68,9 +84,9 @@ all_results = []
 for page in range(6):
     page_results = scrape_data(page)
     all_results.extend(page_results)
-    time.sleep(10)  # Wait between page requests to avoid rate limiting
+    time.sleep(5)  # Wait between page requests to avoid rate limiting
 
-print(f'Total data scraped: {all_results}')
+print(f'Total data scraped: {len(all_results)} entries')
 
 # Step 5: Generate RSS feed
 rss = ET.Element('rss', version='2.0')
