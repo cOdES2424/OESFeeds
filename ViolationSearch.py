@@ -79,13 +79,19 @@ while True:
 print(f'Total data scraped: {all_results}')
 
 # Step 5: Generate RSS feed
-rss = ET.Element('rss', version='2.0')
+rss = ET.Element('rss', version='2.0', nsmap={'atom': 'http://www.w3.org/2005/Atom'})
 channel = ET.SubElement(rss, 'channel')
 ET.SubElement(channel, 'title').text = 'Violation Search Feed'
 ET.SubElement(channel, 'link').text = 'https://apps.occ.ok.gov/PSTPortal/PublicImaging/Home'
 ET.SubElement(channel, 'description').text = 'Feed of violations from the Oklahoma Corporation Commission'
 ET.SubElement(channel, 'language').text = 'en-US'
 ET.SubElement(channel, 'lastBuildDate').text = datetime.now(timezone.utc).strftime('%a, %d %b %Y %H:%M:%S %z')
+
+# Add atom:link element
+atom_link = ET.SubElement(channel, '{http://www.w3.org/2005/Atom}link')
+atom_link.set('href', 'https://apps.occ.ok.gov/PSTPortal/PublicImaging/Home')
+atom_link.set('rel', 'self')
+atom_link.set('type', 'application/rss+xml')
 
 for entry in all_results:
     item = ET.SubElement(channel, 'item')
