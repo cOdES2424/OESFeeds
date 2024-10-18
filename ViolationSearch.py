@@ -1,6 +1,6 @@
 import requests
 from bs4 import BeautifulSoup
-from datetime import datetime, timezone, timedelta
+from datetime import datetime, timedelta
 
 # Step 1: Open the login page and get the login form
 login_url = 'https://apps.occ.ok.gov/PSTPortal/Account/Login'
@@ -31,13 +31,15 @@ response = session.get(target_url)
 print('Navigated to target page')
 soup = BeautifulSoup(response.content, 'html.parser')
 
+# Print the entire content for verification
+print(soup.prettify())
+
 # Step 5: Confirm table presence and print first few rows for verification
 table = soup.find('table', {'id': 'tablePublicImagingSearchResults'})
 print(f'Table found: {table is not None}')
 
 if table:
-    tbody = table.find('tbody')
-    rows = tbody.find_all('tr', {'role': 'row'}) if tbody else []
+    rows = table.find_all('tr')
     for row in rows[:3]:  # Print first 3 rows
         columns = row.find_all('td')
         print(f'Row columns: {[col.text.strip() for col in columns]}')
@@ -46,12 +48,14 @@ if table:
     for row in rows:
         columns = row.find_all('td')
         if columns and len(columns) > 3:
-            entry = {
-                'id': columns[1].text.strip(),
-                'description': columns[2].text.strip(),
-                'date': columns[3].text.strip()
-            }
-            if any(keyword in entry['description'] for keyword in ['NOV', 'NOCR', 'SOR']):
+            description = columns[2].text.strip()
+            print(f'Description: {description}')  # Debug column content
+            if any(keyword in description for keyword in ['NOV', 'NOCR', 'SOR']):
+                entry = {
+                    'id': columns[1].text.strip(),
+                    'description': description,
+                    'date': columns[3].text.strip()
+                }
                 results.append(entry)
 
 print(f'Initial data scraped: {results}')
