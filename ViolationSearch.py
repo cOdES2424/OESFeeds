@@ -31,14 +31,13 @@ response = session.get(target_url)
 print('Navigated to target page')
 soup = BeautifulSoup(response.content, 'html.parser')
 
-# Step 5: Confirm table presence
+# Step 5: Confirm table presence and print first few rows for verification
 table = soup.find('table', {'id': 'tablePublicImagingSearchResults'})
 print(f'Table found: {table is not None}')
 
-# If table is found, print the first few rows for verification
 if table:
     tbody = table.find('tbody')
-    rows = tbody.find_all('tr', class_=lambda x: x in ['odd', 'even']) if tbody else []
+    rows = tbody.find_all('tr', {'role': 'row'}) if tbody else []
     for row in rows[:3]:  # Print first 3 rows
         columns = row.find_all('td')
         print(f'Row columns: {[col.text.strip() for col in columns]}')
