@@ -40,8 +40,8 @@ soup = BeautifulSoup(response.content, 'html.parser')
 def scrape_current_page(soup):
     print('Scraping current page...')
     table = soup.find('table', {'id': 'tablePublicImagingSearchResults'})
-    print(f'Table found: {table is not None}')  # Confirm table is found
-    table_rows = table.find_all('tr', class_=lambda x: x in ['odd', 'even']) if table else []
+    tbody = table.find('tbody') if table else None
+    table_rows = tbody.find_all('tr', {'role': 'row'}) if tbody else []
     results = []
     for row in table_rows:
         columns = row.find_all('td')
