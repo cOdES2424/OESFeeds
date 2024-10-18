@@ -1,6 +1,6 @@
 import requests
 from bs4 import BeautifulSoup
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 import xml.etree.ElementTree as ET
 import os
 import hashlib
@@ -22,7 +22,7 @@ login_data = {
 # Find the hidden input fields and add them to login_data
 hidden_inputs = soup.find_all('input', type='hidden')
 for hidden_input in hidden_inputs:
-    login_data[hidden_input['name']] = hidden_input['value']
+    login_data[hidden_input['name']] = login_data.get(hidden_input['name'], hidden_input['value'])
 
 # Step 3: Submit the login form
 session.post(login_url, data=login_data)
@@ -69,7 +69,7 @@ page = 0
 # Paginate until no more data is found
 while True:
     page_results = scrape_data(page)
-    if not page_results and page > 1:  # Stop if no data found and already checked multiple pages
+    if not page_results:
         break
     all_results.extend(page_results)
     page += 1
