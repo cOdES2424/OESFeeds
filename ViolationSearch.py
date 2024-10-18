@@ -70,6 +70,7 @@ page = 0
 while True:
     page_results = scrape_data(page)
     if not page_results:
+        print(f"No data found on page {page}. Ending pagination.")
         break
     all_results.extend(page_results)
     print(f"Page {page} data count: {len(page_results)}")
@@ -79,7 +80,7 @@ while True:
 print(f'Total data scraped: {all_results}')
 
 # Step 5: Generate RSS feed
-rss = ET.Element('rss', version='2.0', nsmap={'atom': 'http://www.w3.org/2005/Atom'})
+rss = ET.Element('rss', version='2.0')
 channel = ET.SubElement(rss, 'channel')
 ET.SubElement(channel, 'title').text = 'Violation Search Feed'
 ET.SubElement(channel, 'link').text = 'https://apps.occ.ok.gov/PSTPortal/PublicImaging/Home'
