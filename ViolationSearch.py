@@ -93,8 +93,8 @@ for entry in all_results:
     ET.SubElement(item, 'pubDate').text = date_obj.strftime('%a, %d %b %Y %H:%M:%S %z')
 
 # Define the path to the main directory
-rss_feed_path = os.path.join(os.getcwd(), 'violation_search_feed.xml')
+main_directory = os.path.join(os.path.dirname(__file__), 'violation_search_feed.xml')
 tree = ET.ElementTree(rss)
-tree.write(rss_feed_path, encoding='utf-8', xml_declaration=True)
+tree.write(main_directory, encoding='utf-8', xml_declaration=True)
 
-print(f"RSS feed generated successfully at {rss_feed_path}")
+print(f"RSS feed generated successfully at {main_directory}")
