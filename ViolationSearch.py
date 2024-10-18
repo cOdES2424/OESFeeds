@@ -41,3 +41,17 @@ if table:
     for row in rows[:3]:  # Print first 3 rows
         columns = row.find_all('td')
         print(f'Row columns: {[col.text.strip() for col in columns]}')
+
+    results = []
+    for row in rows:
+        columns = row.find_all('td')
+        if columns and len(columns) > 3:
+            entry = {
+                'id': columns[1].text.strip(),
+                'description': columns[2].text.strip(),
+                'date': columns[3].text.strip()
+            }
+            if any(keyword in entry['description'] for keyword in ['NOV', 'NOCR', 'SOR']):
+                results.append(entry)
+
+print(f'Initial data scraped: {results}')
