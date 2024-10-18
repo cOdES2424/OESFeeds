@@ -1,6 +1,6 @@
 import requests
 from bs4 import BeautifulSoup
-from datetime import datetime, timezone, timedelta
+from datetime import datetime, timedelta
 import xml.etree.ElementTree as ET
 import os
 import hashlib
@@ -66,13 +66,14 @@ def scrape_data(page_number):
 all_results = []
 page = 0
 
+# Paginate until no more data is found
 while True:
     page_results = scrape_data(page)
-    if not page_results:
+    if not page_results and page > 1:  # Stop if no data found and already checked multiple pages
         break
     all_results.extend(page_results)
     page += 1
-    time.sleep(5)  # Wait to avoid rate limiting
+    time.sleep(10)  # Wait to avoid rate limiting
 
 print(f'Total data scraped: {all_results}')
 
