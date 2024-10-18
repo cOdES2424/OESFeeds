@@ -72,7 +72,7 @@ while True:
         break
     all_results.extend(page_results)
     page += 1
-    time.sleep(10)  # Wait to avoid rate limiting
+    time.sleep(5)  # Wait to avoid rate limiting
 
 print(f'Total data scraped: {all_results}')
 
