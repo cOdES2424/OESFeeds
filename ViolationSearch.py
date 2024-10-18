@@ -64,11 +64,15 @@ def scrape_data(page_number):
     return results
 
 all_results = []
-# Loop through the first 6 pages
-for page in range(6):
+page = 0
+
+while True:
     page_results = scrape_data(page)
+    if not page_results:
+        break
     all_results.extend(page_results)
-    time.sleep(5)  # Wait between page requests to avoid rate limiting
+    page += 1
+    time.sleep(10)  # Wait to avoid rate limiting
 
 print(f'Total data scraped: {all_results}')
 
@@ -93,7 +97,8 @@ for entry in all_results:
     ET.SubElement(item, 'pubDate').text = date_obj.strftime('%a, %d %b %Y %H:%M:%S %z')
 
 # Save to main directory
-rss_feed_path = 'violation_search_feed.xml'
+current_directory = os.getcwd()
+rss_feed_path = os.path.join(current_directory, 'violation_search_feed.xml')
 tree = ET.ElementTree(rss)
 tree.write(rss_feed_path, encoding='utf-8', xml_declaration=True)
 
