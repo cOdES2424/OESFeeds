@@ -1,6 +1,6 @@
 import requests
 from bs4 import BeautifulSoup
-from datetime import datetime, timedelta, timezone
+from datetime import datetime, timezone, timedelta
 import xml.etree.ElementTree as ET
 import os
 import hashlib
@@ -25,7 +25,7 @@ for hidden_input in hidden_inputs:
     login_data[hidden_input['name']] = hidden_input['value']
 
 # Step 3: Submit the login form
-response = session.post(login_url, data=login_data)
+session.post(login_url, data=login_data)
 print('Logged in successfully')
 
 # Step 4: Function to navigate pages and scrape data
@@ -64,18 +64,11 @@ def scrape_data(page_number):
     return results
 
 all_results = []
-page = 0
-
-# Paginate until no more data is found
-while True:
+# Loop through the first 6 pages
+for page in range(6):
     page_results = scrape_data(page)
-    if not page_results:
-        print(f"No data found on page {page}. Ending pagination.")
-        break
     all_results.extend(page_results)
-    print(f"Page {page} data count: {len(page_results)}")
-    page += 1
-    time.sleep(10)  # Wait to avoid rate limiting
+    time.sleep(5)  # Wait between page requests to avoid rate limiting
 
 print(f'Total data scraped: {all_results}')
 
@@ -88,12 +81,6 @@ ET.SubElement(channel, 'description').text = 'Feed of violations from the Oklaho
 ET.SubElement(channel, 'language').text = 'en-US'
 ET.SubElement(channel, 'lastBuildDate').text = datetime.now(timezone.utc).strftime('%a, %d %b %Y %H:%M:%S %z')
 
-# Add atom:link element
-atom_link = ET.SubElement(channel, '{http://www.w3.org/2005/Atom}link')
-atom_link.set('href', 'https://apps.occ.ok.gov/PSTPortal/PublicImaging/Home')
-atom_link.set('rel', 'self')
-atom_link.set('type', 'application/rss+xml')
-
 for entry in all_results:
     item = ET.SubElement(channel, 'item')
     ET.SubElement(item, 'title').text = f"{entry['id']} - {entry['description']} - {entry['date']}"
@@ -105,9 +92,8 @@ for entry in all_results:
     date_obj = date_obj.replace(tzinfo=timezone.utc)
     ET.SubElement(item, 'pubDate').text = date_obj.strftime('%a, %d %b %Y %H:%M:%S %z')
 
-# Save to main directory
-current_directory = os.getcwd()
-rss_feed_path = os.path.join(current_directory, 'violation_search_feed.xml')
+# Define the path to the main directory
+rss_feed_path = os.path.join(os.getcwd(), 'violation_search_feed.xml')
 tree = ET.ElementTree(rss)
 tree.write(rss_feed_path, encoding='utf-8', xml_declaration=True)
 
