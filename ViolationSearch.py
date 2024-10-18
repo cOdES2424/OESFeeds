@@ -1,6 +1,10 @@
 import requests
 from bs4 import BeautifulSoup
 from datetime import datetime, timezone, timedelta
+import xml.etree.ElementTree as ET
+import os
+import hashlib
+import time
 
 # Step 1: Open the login page and get the login form
 login_url = 'https://apps.occ.ok.gov/PSTPortal/Account/Login'
@@ -24,36 +28,73 @@ for hidden_input in hidden_inputs:
 session.post(login_url, data=login_data)
 print('Logged in successfully')
 
-# Step 4: Navigate to the target page with search parameters
-date_14_days_ago = (datetime.now() - timedelta(days=14)).strftime('%m/%d/%Y')
-target_url = f'https://apps.occ.ok.gov/PSTPortal/PublicImaging/Home?indexName=DateRange&DateRangeFrom={date_14_days_ago}&DateRangeTo={date_14_days_ago}&btnSubmitDateSearch=Search+by+Date+Range&pageNumber=0'
-response = session.get(target_url)
-print('Navigated to target page')
-soup = BeautifulSoup(response.content, 'html.parser')
+# Step 4: Function to navigate pages and scrape data
+def scrape_data(page_number):
+    date_14_days_ago = (datetime.now() - timedelta(days=14)).strftime('%m/%d/%Y')
+    url = f'https://apps.occ.ok.gov/PSTPortal/PublicImaging/Home?indexName=DateRange&DateRangeFrom={date_14_days_ago}&DateRangeTo={date_14_days_ago}&btnSubmitDateSearch=Search+by+Date+Range&pageNumber={page_number}'
+    response = session.get(url)
+    print(f'Navigated to page {page_number}')
+    soup = BeautifulSoup(response.content, 'html.parser')
 
-# Step 5: Confirm table presence and print first few rows for verification
-table = soup.find('table', {'id': 'tablePublicImagingSearchResults'})
-print(f'Table found: {table is not None}')
+    # Confirm table presence
+    table = soup.find('table', {'id': 'tablePublicImagingSearchResults'})
+    print(f'Table found on page {page_number}: {table is not None}')
 
-results = []
-if table:
-    tbody = table.find('tbody')
-    rows = tbody.find_all('tr') if tbody else []
-    for row in rows[:3]:  # Print first 3 rows
-        columns = row.find_all('td')
-        print(f'Row columns: {[col.text.strip() for col in columns]}')
+    results = []
+    if table:
+        tbody = table.find('tbody')
+        rows = tbody.find_all('tr') if tbody else []
+        for row in rows[:3]:  # Print first 3 rows
+            columns = row.find_all('td')
+            print(f'Row columns: {[col.text.strip() for col in columns]}')
 
-    for row in rows:
-        columns = row.find_all('td')
-        if columns and len(columns) > 3:
-            description = columns[2].text.strip()
-            print(f'Description: {description}')  # Debug column content
-            if any(keyword in description for keyword in ['NOV', 'NOCR', 'SOR']):
-                entry = {
-                    'id': columns[1].text.strip(),
-                    'description': description,
-                    'date': columns[3].text.strip()
-                }
-                results.append(entry)
+        for row in rows:
+            columns = row.find_all('td')
+            if columns and len(columns) > 3:
+                description = columns[2].text.strip()
+                print(f'Description: {description}')  # Debug column content
+                if 'NOV' in description or 'NOCR' in description or 'SOR' in description:
+                    entry = {
+                        'id': columns[1].text.strip(),
+                        'description': description,
+                        'date': columns[3].text.strip()
+                    }
+                    results.append(entry)
 
-print(f'Initial data scraped: {results}')
+    return results
+
+all_results = []
+# Loop through the first 6 pages
+for page in range(6):
+    page_results = scrape_data(page)
+    all_results.extend(page_results)
+    time.sleep(5)  # Wait between page requests to avoid rate limiting
+
+print(f'Total data scraped: {all_results}')
+
+# Step 5: Generate RSS feed
+rss = ET.Element('rss', version='2.0')
+channel = ET.SubElement(rss, 'channel')
+ET.SubElement(channel, 'title').text = 'Violation Search Feed'
+ET.SubElement(channel, 'link').text = 'https://apps.occ.ok.gov/PSTPortal/PublicImaging/Home'
+ET.SubElement(channel, 'description').text = 'Feed of violations from the Oklahoma Corporation Commission'
+ET.SubElement(channel, 'language').text = 'en-US'
+ET.SubElement(channel, 'lastBuildDate').text = datetime.now(timezone.utc).strftime('%a, %d %b %Y %H:%M:%S %z')
+
+for entry in all_results:
+    item = ET.SubElement(channel, 'item')
+    ET.SubElement(item, 'title').text = f"{entry['id']} - {entry['description']} - {entry['date']}"
+    ET.SubElement(item, 'link').text = 'https://apps.occ.ok.gov/PSTPortal/PublicImaging/Home'
+    ET.SubElement(item, 'description').text = f"{entry['id']} - {entry['description']} - {entry['date']}"
+    guid = hashlib.md5(f"{entry['id']} - {entry['description']} - {entry['date']}".encode()).hexdigest()
+    ET.SubElement(item, 'guid').text = guid
+    date_obj = datetime.strptime(entry['date'], '%m/%d/%Y')
+    date_obj = date_obj.replace(tzinfo=timezone.utc)
+    ET.SubElement(item, 'pubDate').text = date_obj.strftime('%a, %d %b %Y %H:%M:%S %z')
+
+# Define the path to the main directory
+rss_feed_path = os.path.join(os.getcwd(), 'violation_search_feed.xml')
+tree = ET.ElementTree(rss)
+tree.write(rss_feed_path, encoding='utf-8', xml_declaration=True)
+
+print(f"RSS feed generated successfully at {rss_feed_path}")
