@@ -64,9 +64,9 @@ def scrape_data(page_number):
     return results
 
 all_results = []
-page = 0
 
 # Loop through pages until no more data is found
+page = 0
 while True:
     page_results = scrape_data(page)
     if not page_results:
@@ -97,7 +97,7 @@ for entry in all_results:
     date_obj = date_obj.replace(tzinfo=timezone.utc)
     ET.SubElement(item, 'pubDate').text = date_obj.strftime('%a, %d %b %Y %H:%M:%S %z')
 
-# Save to main directory
+# Define the path to the main directory
 rss_feed_path = os.path.join(os.getcwd(), 'violation_search_feed.xml')
 tree = ET.ElementTree(rss)
 tree.write(rss_feed_path, encoding='utf-8', xml_declaration=True)
