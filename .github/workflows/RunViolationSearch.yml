@@ -1,28 +1,38 @@
-name: Run Script
+name: Generate Violation Search RSS Feed
 
 on:
-  push:
-    branches:
-      - main
-  workflow_dispatch:
+  schedule:
+    - cron: '30 0,12 * * *' # Runs every 12 hours at 12:30 AM and PM UTC
+  workflow_dispatch: # Allows manual triggering
 
 jobs:
-  run-script:
+  build:
     runs-on: ubuntu-latest
 
     steps:
     - name: Checkout repository
-      uses: actions/checkout@v3
+      uses: actions/checkout@v2
 
     - name: Set up Python
-      uses: actions/setup-python@v4
+      uses: actions/setup-python@v2
       with:
         python-version: '3.x'
 
     - name: Install dependencies
       run: |
         python -m pip install --upgrade pip
-        pip install requests beautifulsoup4 selenium webdriver-manager
+        pip install beautifulsoup4 requests
 
-    - name: Run the script
-      run: python ViolationSearch.py
+    - name: Run script
+      run: |
+        python ViolationSearch.py
+
+    - name: Commit and push changes
+      run: |
+        git config --global user.name 'github-actions'
+        git config --global user.email 'github-actions@github.com'
+        git add violation_search_feed.xml
+        git commit -m 'Update RSS feed'
+        git push
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
