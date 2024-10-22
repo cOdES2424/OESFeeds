@@ -2,7 +2,8 @@ name: Generate Violation Search RSS Feed
 
 on:
   schedule:
-    - cron: '30 0,12 * * *' # Runs every 12 hours at 12:30 AM and PM UTC
+    - cron: '30 13 * * *' # Runs at 7:30 AM Central Time
+    - cron: '0 19 * * *'  # Runs at 1:00 PM Central Time
   workflow_dispatch: # Allows manual triggering
 
 jobs:
