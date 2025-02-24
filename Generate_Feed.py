@@ -103,10 +103,12 @@ for row in rows:
         
         if title not in existing_titles:
             try:
-                # Parse the date and convert to CST
+                # Parse the date and convert to local time (CST)
                 date_obj = datetime.strptime(action_date, '%m/%d/%Y')
-                date_obj = date_obj.replace(tzinfo=timezone.utc).astimezone(timezone(timedelta(hours=-6)))  # CST
+                date_obj = date_obj.replace(tzinfo=timezone(timedelta(hours=-6)))  # CST without changing the date
+                
                 print(f"Parsed date: {date_obj} for action_date: {action_date}")  # Debug statement
+                
                 if not last_processed_date or date_obj > last_processed_date:
                     new_titles.append((title, description, date_obj))
             except ValueError:
