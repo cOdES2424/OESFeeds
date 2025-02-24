@@ -4,9 +4,22 @@ from datetime import datetime, timezone, timedelta
 import xml.etree.ElementTree as ET
 import os
 import hashlib
+import csv
 
 # Constants
 FEED_LIMIT = 50  # Limit the feed to the most recent 50 items
+
+# Function to load case names from CSV
+def load_case_names(csv_file):
+    case_names = {}
+    with open(csv_file, mode='r') as file:
+        reader = csv.DictReader(file)
+        for row in reader:
+            case_names[row['case_number']] = row['case_name']
+    return case_names
+
+# Load case names
+case_names = load_case_names('case_names.csv')
 
 # Step 1: Open the login page and get the login form
 login_url = 'https://apps.occ.ok.gov/PSTPortal/Account/Login'
@@ -74,7 +87,10 @@ for row in rows:
         action_status = cells[4].text.strip()
         subject = cells[5].text.strip()
         
-        title = f"{case_number} - {action_type} - {action_status} - {subject} - {action_date}"
+        # Lookup case name from the CSV file
+        case_name = case_names.get(case_number, 'Unknown Case Name')
+        
+        title = f"{case_number} - {case_name} - {action_type} - {action_status} - {subject} - {action_date}"
         if title not in existing_titles:
             try:
                 # Parse the date and convert to CST
