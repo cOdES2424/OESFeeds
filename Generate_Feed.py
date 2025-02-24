@@ -9,17 +9,21 @@ import csv
 # Constants
 FEED_LIMIT = 50  # Limit the feed to the most recent 50 items
 
-# Function to load case names from CSV
-def load_case_names(csv_file):
-    case_names = {}
+# Function to load case details from CSV
+def load_case_details(csv_file):
+    case_details = {}
     with open(csv_file, mode='r') as file:
         reader = csv.DictReader(file)
         for row in reader:
-            case_names[row['case_number']] = row['case_name']
-    return case_names
+            case_details[row['case_number']] = {
+                'case_name': row['case_name'],
+                'job_number': row['job_number'],
+                'project_manager': row['project_manager']
+            }
+    return case_details
 
-# Load case names
-case_names = load_case_names('case_names.csv')
+# Load case details
+case_details = load_case_details('case_names.csv')
 
 # Step 1: Open the login page and get the login form
 login_url = 'https://apps.occ.ok.gov/PSTPortal/Account/Login'
@@ -87,10 +91,16 @@ for row in rows:
         action_status = cells[4].text.strip()
         subject = cells[5].text.strip()
         
-        # Lookup case name from the CSV file
-        case_name = case_names.get(case_number, 'Unknown Case Name')
+        # Lookup case details from the CSV file
+        case_detail = case_details.get(case_number, {
+            'case_name': 'Unknown Case Name',
+            'job_number': 'Unknown Job Number',
+            'project_manager': 'Unknown Project Manager'
+        })
         
-        title = f"{case_number} - {case_name} - {action_type} - {action_status} - {subject} - {action_date}"
+        title = f"{case_number} - {case_detail['case_name']} - {action_type} - {action_status} - {subject} - {action_date}"
+        description = f"{case_number} - {case_detail['case_name']} - {case_detail['job_number']} - {case_detail['project_manager']} - {action_type} - {action_status} - {subject} - {action_date}"
+        
         if title not in existing_titles:
             try:
                 # Parse the date and convert to CST
@@ -98,13 +108,13 @@ for row in rows:
                 date_obj = date_obj.replace(tzinfo=timezone.utc).astimezone(timezone(timedelta(hours=-6)))  # CST
                 print(f"Parsed date: {date_obj} for action_date: {action_date}")  # Debug statement
                 if not last_processed_date or date_obj > last_processed_date:
-                    new_titles.append((title, date_obj))
+                    new_titles.append((title, description, date_obj))
             except ValueError:
                 print(f"Skipping invalid date format: {action_date}")
                 continue
 
 # Sort new titles by date (newest first)
-new_titles.sort(key=lambda x: x[1], reverse=True)
+new_titles.sort(key=lambda x: x[2], reverse=True)
 
 # Limit the number of items in the feed
 new_titles = new_titles[:FEED_LIMIT]
@@ -124,11 +134,11 @@ atom_link.set('href', 'https://apps.occ.ok.gov/LicenseePortal/CaseActions.aspx')
 atom_link.set('rel', 'self')
 atom_link.set('type', 'application/rss+xml')
 
-for title, date_obj in new_titles:
+for title, description, date_obj in new_titles:
     item = ET.SubElement(channel, 'item')
     ET.SubElement(item, 'title').text = title
     ET.SubElement(item, 'link').text = 'https://apps.occ.ok.gov/LicenseePortal/CaseActions.aspx'
-    ET.SubElement(item, 'description').text = title
+    ET.SubElement(item, 'description').text = description
     
     # Create a unique GUID using a hash
     guid = hashlib.md5(title.encode()).hexdigest()
@@ -143,13 +153,13 @@ tree.write(rss_feed_path, encoding='utf-8', xml_declaration=True)
 # Save new titles to the processed items file
 if new_titles:
     with open('processed_items.txt', 'a') as f:
-        for title, _ in new_titles:
+        for title, _, _ in new_titles:
             f.write(title + '\n')
     print(f"Added {len(new_titles)} new titles to processed_items.txt")
 
 # Update the last processed date
 if new_titles:
-    latest_date = new_titles[0][1]
+    latest_date = new_titles[0][2]
     with open('last_processed_date.txt', 'w') as f:
         f.write(latest_date.strftime('%Y-%m-%d %H:%M:%S%z'))
     print(f"Updated last processed date to: {latest_date}")
