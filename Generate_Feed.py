@@ -43,7 +43,11 @@ for hidden_input in hidden_inputs:
     login_data[hidden_input['name']] = hidden_input['value']
 
 # Step 3: Submit the login form
-session.post(login_url, data=login_data)
+response = session.post(login_url, data=login_data)
+
+# Verify login was successful
+if response.url == login_url:
+    raise ValueError("Login failed. Please check your credentials.")
 
 # Step 4: Navigate to the intermediary page
 intermediate_url = 'https://apps.occ.ok.gov/PSTPortal/CorrectiveAction/Forward?Length=16'
