@@ -25,13 +25,16 @@ jobs:
         pip install beautifulsoup4 requests
 
     - name: Run script
+      env:
+        USERNAME: ${{ secrets.USERNAME }}
+        PASSWORD: ${{ secrets.PASSWORD }}
       run: |
         python ViolationSearch.py
 
     - name: Commit and push changes
       run: |
         git config --global user.name 'github-actions'
-        git config --global user.email 'github-actions@github.com'
+        user.email 'github-actions@github.com'
         git add violation_search_feed.xml
         git commit -m 'Update RSS feed'
         git push
