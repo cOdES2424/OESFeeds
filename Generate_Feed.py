@@ -56,6 +56,9 @@ case_actions_page = session.get(case_actions_url)
 # Step 6: Parse the page with BeautifulSoup
 soup = BeautifulSoup(case_actions_page.content, 'html.parser')
 
+# Debug: Print the page content to verify if the table is present
+print(soup.prettify())
+
 # Extract the necessary data from the table
 table = soup.find('table', {'class': 'rptGridView'})  # Adjust the class as necessary
 if not table:
