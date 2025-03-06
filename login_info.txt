@@ -1,2 +1,0 @@
-UserName=bolzmi@hotmail.com
-Password=redfred4
