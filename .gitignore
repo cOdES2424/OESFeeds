@@ -1,0 +1,5 @@
+# Ignore login information file
+login_info.txt
+
+# Ignore case names CSV file
+case_names.csv
