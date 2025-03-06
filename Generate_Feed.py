@@ -1,22 +1,13 @@
+import os
 import requests
 from bs4 import BeautifulSoup
 from datetime import datetime, timezone, timedelta
 import xml.etree.ElementTree as ET
-import os
 import hashlib
 import csv
 
 # Constants
 FEED_LIMIT = 50  # Limit the feed to the most recent 50 items
-
-# Function to load login information from file
-def load_login_info(file_path):
-    login_info = {}
-    with open(file_path, 'r') as file:
-        for line in file:
-            key, value = line.strip().split('=')
-            login_info[key] = value
-    return login_info
 
 # Function to load case details from CSV
 def load_case_details(csv_file):
@@ -31,8 +22,11 @@ def load_case_details(csv_file):
             }
     return case_details
 
-# Load login information
-login_data = load_login_info('login_info.txt')
+# Load login information from environment variables
+login_data = {
+    'UserName': os.getenv('USERNAME'),
+    'Password': os.getenv('PASSWORD')
+}
 
 # Load case details
 case_details = load_case_details('case_names.csv')
