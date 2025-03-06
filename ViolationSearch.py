@@ -6,6 +6,18 @@ import os
 import hashlib
 import time
 
+# Function to load login information from file
+def load_login_info(file_path):
+    login_info = {}
+    with open(file_path, 'r') as file:
+        for line in file:
+            key, value = line.strip().split('=')
+            login_info[key] = value
+    return login_info
+
+# Load login information
+login_data = load_login_info('login_info.txt')
+
 # Step 1: Open the login page and get the login form
 login_url = 'https://apps.occ.ok.gov/PSTPortal/Account/Login'
 session = requests.Session()
@@ -17,12 +29,6 @@ if login_page.status_code != 200:
 
 print('Login page fetched')
 soup = BeautifulSoup(login_page.content, 'html.parser')
-
-# Step 2: Fill in the login form with correct field locators
-login_data = {
-    'UserName': 'bolzmi@hotmail.com',
-    'Password': 'redfred4'
-}
 
 # Find the hidden input fields and add them to login_data
 hidden_inputs = soup.find_all('input', type='hidden')
