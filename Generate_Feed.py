@@ -1,4 +1,3 @@
-
 import os
 import requests
 from bs4 import BeautifulSoup
@@ -76,7 +75,7 @@ else:
 # Load the last processed date
 last_processed_date = None
 if os.path.exists('last_processed_date.txt'):
-    with open('last_processed_date.txt', 'r') as f):
+    with open('last_processed_date.txt', 'r') as f:
         last_processed_date = datetime.strptime(f.read().strip(), '%Y-%m-%d %H:%M:%S%z')
     print(f"Loaded last processed date: {last_processed_date}")
 else:
