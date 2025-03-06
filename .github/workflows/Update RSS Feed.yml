@@ -9,6 +9,8 @@ jobs:
   update-feed:
     runs-on: ubuntu-latest
 
+    environment: login  # Specify the environment
+
     steps:
       - name: Checkout repository
         uses: actions/checkout@v3  # Updated to v3
@@ -25,8 +27,8 @@ jobs:
 
       - name: Run the script
         env:
-          USERNAME: ${{ secrets.login.USERNAME }}
-          PASSWORD: ${{ secrets.login.PASSWORD }}
+          USERNAME: ${{ secrets.USERNAME }}
+          PASSWORD: ${{ secrets.PASSWORD }}
         run: python Generate_Feed.py
 
       - name: Debug Git status
