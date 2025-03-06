@@ -24,6 +24,9 @@ jobs:
           pip install requests beautifulsoup4
 
       - name: Run the script
+        env:
+          USERNAME: ${{ secrets.USERNAME }}
+          PASSWORD: ${{ secrets.PASSWORD }}
         run: python Generate_Feed.py
 
       - name: Debug Git status
