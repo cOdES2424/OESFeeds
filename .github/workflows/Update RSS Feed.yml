@@ -25,8 +25,8 @@ jobs:
 
       - name: Run the script
         env:
-          USERNAME: ${{ secrets.USERNAME }}
-          PASSWORD: ${{ secrets.PASSWORD }}
+          USERNAME: ${{ secrets.login.USERNAME }}
+          PASSWORD: ${{ secrets.login.PASSWORD }}
         run: python Generate_Feed.py
 
       - name: Debug Git status
