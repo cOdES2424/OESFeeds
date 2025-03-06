@@ -9,6 +9,15 @@ import csv
 # Constants
 FEED_LIMIT = 50  # Limit the feed to the most recent 50 items
 
+# Function to load login information from file
+def load_login_info(file_path):
+    login_info = {}
+    with open(file_path, 'r') as file:
+        for line in file:
+            key, value = line.strip().split('=')
+            login_info[key] = value
+    return login_info
+
 # Function to load case details from CSV
 def load_case_details(csv_file):
     case_details = {}
@@ -22,6 +31,9 @@ def load_case_details(csv_file):
             }
     return case_details
 
+# Load login information
+login_data = load_login_info('login_info.txt')
+
 # Load case details
 case_details = load_case_details('case_names.csv')
 
@@ -30,12 +42,6 @@ login_url = 'https://apps.occ.ok.gov/PSTPortal/Account/Login'
 session = requests.Session()
 login_page = session.get(login_url)
 soup = BeautifulSoup(login_page.content, 'html.parser')
-
-# Step 2: Fill in the login form with correct field locators
-login_data = {
-    'UserName': 'bolzmi@hotmail.com',
-    'Password': 'redfred4'
-}
 
 # Find the hidden input fields and add them to login_data
 hidden_inputs = soup.find_all('input', type='hidden')
