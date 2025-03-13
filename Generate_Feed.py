@@ -28,8 +28,16 @@ login_data = {
     'Password': os.getenv('PASSWORD')
 }
 
+# Load the path to the CSV file from an environment variable
+csv_file_path = os.getenv('CSV_FILE_PATH')
+
+# Check if the environment variable is set
+if not csv_file_path:
+    print("CSV_FILE_PATH environment variable is not set")
+    exit()
+
 # Load case details
-case_details = load_case_details('case_names.csv')
+case_details = load_case_details(csv_file_path)
 
 # Step 1: Open the login page and get the login form
 login_url = 'https://apps.occ.ok.gov/PSTPortal/Account/Login'
