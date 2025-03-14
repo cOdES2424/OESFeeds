@@ -52,7 +52,9 @@ jobs:
           git config --global user.email 'github-actions@github.com'
           git add case_actions_feed.xml case_actions_feed.opml
           git commit -m 'Update RSS feed' || echo "No changes to commit"
+          git stash  # Stash changes
           git pull --rebase  # Pull the latest changes
+          git stash pop  # Apply the stashed changes
           git push
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
