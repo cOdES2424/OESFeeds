@@ -41,7 +41,7 @@ print('Logged in successfully')
 # Step 4: Function to navigate pages and scrape data
 def scrape_data(page_number):
     date_14_days_ago = (datetime.now() - timedelta(days=14)).strftime('%m/%d/%Y')
-    url = (f'https://apps.occ.ok.gov/PSTPortal/PublicImaging/Home?indexName=DateRange'
+    url = (f'https://apps.occ.ok.gov/PSTPortal/PublicImaging/Home#SearchByDate'
            f'&DateRangeFrom={date_14_days_ago}&DateRangeTo={date_14_days_ago}'
            f'&btnSubmitDateSearch=Search+by+Date+Range&pageNumber={page_number}')
     
