@@ -29,7 +29,7 @@ jobs:
         USERNAME: ${{ secrets.USERNAME }}
         PASSWORD: ${{ secrets.PASSWORD }}
       run: |
-        python ViolationSearch.py --username ${{ secrets.USERNAME }} --password ${{ secrets.PASSWORD }}
+        python ViolationSearch.py
 
     - name: Commit and push changes
       run: |
