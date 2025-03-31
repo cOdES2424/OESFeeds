@@ -53,6 +53,9 @@ def scrape_data(session, page_number):
         return []
 
     print(f'Navigated to page {page_number}')
+    print(f'Session cookies: {session.cookies.get_dict()}')  # Debug session cookies
+    print(f'Response headers: {response.headers}')  # Debug response headers
+
     soup = BeautifulSoup(response.content, 'html.parser')
 
     # Confirm table presence
