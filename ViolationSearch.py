@@ -39,18 +39,13 @@ if response.status_code != 200:
 print('Logged in successfully')
 
 # Step 4: Function to navigate pages and scrape data
-url = 'https://apps.occ.ok.gov/PSTPortal/PublicImaging/Home#SearchByDate'
 def scrape_data(page_number):
     date_14_days_ago = (datetime.now() - timedelta(days=14)).strftime('%m/%d/%Y')
-    search_data = {
-        'DateRangeFrom': date_14_days_ago,
-        'DateRangeTo': date_14_days_ago,
-        'btnSubmitDateSearch': 'Search by Date Range',
-        'pageNumber': page_number
-    }
-    url = 'https://apps.occ.ok.gov/PSTPortal/PublicImaging/Home#SearchByDate'
+    url = (f'https://apps.occ.ok.gov/PSTPortal/PublicImaging/Home?indexName=DateRange'
+           f'&DateRangeFrom={date_14_days_ago}&DateRangeTo={date_14_days_ago}'
+           f'&btnSubmitDateSearch=Search+by+Date+Range&pageNumber={page_number}')
     
-    response = session.post(url, data=search_data)
+    response = session.get(url)
 
     if response.status_code != 200:
         print(f'Failed to navigate to page {page_number}')
