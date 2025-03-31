@@ -23,18 +23,29 @@ hidden_inputs = soup.find_all('input', type='hidden')
 for hidden_input in hidden_inputs:
     login_data[hidden_input['name']] = hidden_input['value']
 
+print('Hidden inputs:', hidden_inputs)  # Debug hidden inputs
+
 # Step 3: Submit the login form
 response = session.post(login_url, data=login_data)
 
 # Verify login was successful
 if response.url == login_url:
-    raise ValueError("Login failed. Please check your credentials.")
+    print('Login failed. Please check your credentials.')
+    print('Response URL:', response.url)  # Debug response URL
+    print('Response content:', response.content)  # Debug response content
+    exit()
 
 print('Logged in successfully')
 
 # Step 4: Navigate to the intermediary page
 intermediate_url = 'https://apps.occ.ok.gov/PSTPortal/CorrectiveAction/Forward?Length=16'
-session.get(intermediate_url)
+intermediate_response = session.get(intermediate_url)
+
+if intermediate_response.status_code != 200:
+    print('Failed to navigate to intermediary page')
+    exit()
+
+print('Navigated to intermediary page')
 
 # Step 5: Function to navigate pages and scrape data
 def scrape_data(page_number):
