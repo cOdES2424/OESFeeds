@@ -8,8 +8,8 @@ import time
 
 # Load login information from environment variables
 login_data = {
-    'UserName': os.getenv('login_USERNAME'),
-    'Password': os.getenv('login_PASSWORD')
+    'UserName': os.getenv('USERNAME'),
+    'Password': os.getenv('PASSWORD')
 }
 
 # Step 1: Open the login page and get the login form
