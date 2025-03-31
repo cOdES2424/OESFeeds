@@ -29,31 +29,16 @@ hidden_inputs = soup.find_all('input', type='hidden')
 for hidden_input in hidden_inputs:
     login_data[hidden_input['name']] = hidden_input['value']
 
-print('Hidden inputs:', hidden_inputs)  # Debug hidden inputs
-
 # Step 3: Submit the login form
 response = session.post(login_url, data=login_data)
 
-# Verify login was successful
-if response.url == login_url:
-    print('Login failed. Please check your credentials.')
-    print('Response URL:', response.url)  # Debug response URL
-    print('Response content:', response.content)  # Debug response content
+if response.status_code != 200:
+    print('Login failed')
     exit()
 
 print('Logged in successfully')
 
-# Step 4: Navigate to the intermediary page
-intermediate_url = 'https://apps.occ.ok.gov/PSTPortal/CorrectiveAction/Forward?Length=16'
-intermediate_response = session.get(intermediate_url)
-
-if intermediate_response.status_code != 200:
-    print('Failed to navigate to intermediary page')
-    exit()
-
-print('Navigated to intermediary page')
-
-# Step 5: Function to navigate pages and scrape data
+# Step 4: Function to navigate pages and scrape data
 def scrape_data(page_number):
     date_14_days_ago = (datetime.now() - timedelta(days=14)).strftime('%m/%d/%Y')
     url = (f'https://apps.occ.ok.gov/PSTPortal/PublicImaging/Home?indexName=DateRange'
@@ -103,7 +88,7 @@ for page in range(6):
 
 print(f'Total data scraped: {len(all_results)} entries')
 
-# Step 6: Generate RSS feed
+# Step 5: Generate RSS feed
 rss = ET.Element('rss', version='2.0')
 channel = ET.SubElement(rss, 'channel')
 ET.SubElement(channel, 'title').text = 'Violation Search Feed'
