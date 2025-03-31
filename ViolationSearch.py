@@ -37,8 +37,9 @@ def login(session):
     # Submit the login form
     response = session.post(login_url, data=login_data, headers=headers)
 
-    if response.status_code != 200:
-        print('Login failed')
+    # Verify login was successful
+    if response.url == login_url:
+        print('Login failed. Please check your credentials.')
         return False
 
     print('Logged in successfully')
