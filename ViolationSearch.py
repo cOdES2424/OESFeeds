@@ -47,7 +47,7 @@ def scrape_data(page_number):
         'btnSubmitDateSearch': 'Search by Date Range',
         'pageNumber': page_number
     }
-    url = 'https://apps.occ.ok.gov/PSTPortal/PublicImaging/Home'
+    url = 'https://apps.occ.ok.gov/PSTPortal/PublicImaging/Home#SearchByDate'
     
     response = session.post(url, data=search_data)
 
