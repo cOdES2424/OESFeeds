@@ -28,15 +28,22 @@ jobs:
       env:
         USERNAME: ${{ secrets.USERNAME }}
         PASSWORD: ${{ secrets.PASSWORD }}
+      run: python ViolationSearch.py
+
+    - name: Debug Git status
       run: |
-        python ViolationSearch.py
+        git status
+        git log -1
 
     - name: Commit and push changes
       run: |
         git config --global user.name 'github-actions'
         git config --global user.email 'github-actions@github.com'
         git add violation_search_feed.xml
-        git commit -m 'Update RSS feed'
+        git commit -m 'Update RSS feed' || echo "No changes to commit"
+        git stash  # Stash changes
+        git pull --rebase  # Pull the latest changes
+        git stash pop  # Apply the stashed changes
         git push
       env:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
