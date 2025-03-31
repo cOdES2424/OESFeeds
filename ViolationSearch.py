@@ -39,6 +39,7 @@ if response.status_code != 200:
 print('Logged in successfully')
 
 # Step 4: Function to navigate pages and scrape data
+url = 'https://apps.occ.ok.gov/PSTPortal/PublicImaging/Home#SearchByDate'
 def scrape_data(page_number):
     date_14_days_ago = (datetime.now() - timedelta(days=14)).strftime('%m/%d/%Y')
     search_data = {
