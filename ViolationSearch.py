@@ -32,6 +32,8 @@ def login(session):
     for hidden_input in hidden_inputs:
         login_data[hidden_input['name']] = hidden_input['value']
 
+    print('Hidden inputs:', hidden_inputs)  # Debug hidden inputs
+
     # Submit the login form
     response = session.post(login_url, data=login_data, headers=headers)
 
@@ -40,6 +42,8 @@ def login(session):
         return False
 
     print('Logged in successfully')
+    print('Response cookies:', session.cookies.get_dict())  # Debug response cookies
+    print('Response headers:', response.headers)  # Debug response headers
     return True
 
 # Function to navigate pages and scrape data
