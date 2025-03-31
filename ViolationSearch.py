@@ -29,12 +29,17 @@ hidden_inputs = soup.find_all('input', type='hidden')
 for hidden_input in hidden_inputs:
     login_data[hidden_input['name']] = hidden_input['value']
 
+print('Hidden inputs:', hidden_inputs)  # Debug hidden inputs
+
 # Step 3: Submit the login form
 response = session.post(login_url, data=login_data)
 
 # Verify login was successful
 if response.url == login_url:
-    raise ValueError("Login failed. Please check your credentials.")
+    print('Login failed. Please check your credentials.')
+    print('Response URL:', response.url)  # Debug response URL
+    print('Response content:', response.content)  # Debug response content
+    exit()
 
 print('Logged in successfully')
 
