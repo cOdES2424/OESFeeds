@@ -5,6 +5,9 @@ on:
     branches:
       - main
   workflow_dispatch:  # This adds the manual trigger option
+  schedule:
+    - cron: '0 12 * * *'  # Runs at 12:00 PM UTC (6:00 AM Central Time)
+    - cron: '0 19 * * *'  # Runs at 7:00 PM UTC (1:00 PM Central Time)
 
 jobs:
   search:
