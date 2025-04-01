@@ -50,7 +50,7 @@ jobs:
         run: |
           git config --global user.name 'github-actions'
           git config --global user.email 'github-actions@github.com'
-          git add violation_search_feed.xml
+          git add violation_search_feed.xml Secure/
           git commit -m 'Update RSS feed' || echo "No changes to commit"
           git stash  # Stash changes
           git pull --rebase  # Pull the latest changes
