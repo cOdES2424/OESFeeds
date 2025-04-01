@@ -58,9 +58,15 @@ def scrape_data(page_number):
     print(f'Navigated to page {page_number}')
     soup = BeautifulSoup(response.content, 'html.parser')
 
+    # Print out the HTML content for debugging
+    print(soup.prettify())
+
     # Confirm table presence
     table = soup.find('table', {'id': 'tablePublicImagingSearchResults'})
     print(f'Table found on page {page_number}: {table is not None}')
+
+    if table:
+        print(table.prettify())  # Print the table HTML for debugging
 
     results = []
     if table:
