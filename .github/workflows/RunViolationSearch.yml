@@ -16,15 +16,6 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v3  # Updated to v3
 
-      - name: Clone private repository
-        run: |
-          git clone https://cOdES2424:${{ secrets.PAT }}@github.com/cOdES2424/Secure.git
-        env:
-          PAT: ${{ secrets.PAT }}
-
-      - name: Set up environment variable
-        run: echo "CSV_FILE_PATH=Secure/cases.csv" >> $GITHUB_ENV
-
       - name: Set up Python
         uses: actions/setup-python@v4  # Updated to v4
         with:
@@ -50,7 +41,6 @@ jobs:
         run: |
           git config --global user.name 'github-actions'
           git config --global user.email 'github-actions@github.com'
-          git rm --cached -r Secure  # Remove Secure directory from index
           git add violation_search_feed.xml
           git commit -m 'Update RSS feed' || echo "No changes to commit"
           git stash  # Stash changes
