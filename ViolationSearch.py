@@ -18,28 +18,33 @@ login_data = {
     'Password': sys.argv[2]
 }
 
-# Step 1: Open the login page and get the login form
-login_url = 'https://apps.occ.ok.gov/PSTPortal/Account/Login'
+def login(session):
+    # Step 1: Open the login page and get the login form
+    login_url = 'https://apps.occ.ok.gov/PSTPortal/Account/Login'
+    login_page = session.get(login_url)
+    soup = BeautifulSoup(login_page.content, 'html.parser')
+
+    # Find the hidden input fields and add them to login_data
+    hidden_inputs = soup.find_all('input', type='hidden')
+    for hidden_input in hidden_inputs:
+        login_data[hidden_input['name']] = hidden_input['value']
+
+    # Print the login data for debugging
+    print('Login data:', login_data)
+
+    # Step 3: Submit the login form
+    response = session.post(login_url, data=login_data)
+
+    # Verify login was successful
+    if response.url == login_url:
+        raise ValueError("Login failed. Please check your credentials.")
+
+    print('Logged in successfully')
+    return session
+
+# Initialize session and login
 session = requests.Session()
-login_page = session.get(login_url)
-soup = BeautifulSoup(login_page.content, 'html.parser')
-
-# Find the hidden input fields and add them to login_data
-hidden_inputs = soup.find_all('input', type='hidden')
-for hidden_input in hidden_inputs:
-    login_data[hidden_input['name']] = hidden_input['value']
-
-# Print the login data for debugging
-print('Login data:', login_data)
-
-# Step 3: Submit the login form
-response = session.post(login_url, data=login_data)
-
-# Verify login was successful
-if response.url == login_url:
-    raise ValueError("Login failed. Please check your credentials.")
-
-print('Logged in successfully')
+session = login(session)
 
 # Step 4: Function to navigate pages and scrape data
 def scrape_data(page_number):
@@ -52,6 +57,12 @@ def scrape_data(page_number):
     print(f'Navigating to URL: {url}')  # Debug URL
 
     response = session.get(url)
+
+    # Check if the page contains the word "login"
+    if 'login' in response.text.lower():
+        print('Detected login page, attempting to log in again...')
+        session = login(session)
+        response = session.get(url)
 
     if response.status_code != 200:
         print(f'Failed to navigate to page {page_number}')
