@@ -8,14 +8,10 @@ import time
 import urllib.parse
 import sys
 
-# Load login information from command-line arguments
-if len(sys.argv) != 3:
-    print("Usage: python ViolationSearch.py <username> <password>")
-    exit()
-
+# Load login information from environment variables
 login_data = {
-    'UserName': sys.argv[1],
-    'Password': sys.argv[2]
+    'UserName': os.getenv('USERNAME'),
+    'Password': os.getenv('PASSWORD')
 }
 
 def login(session):
