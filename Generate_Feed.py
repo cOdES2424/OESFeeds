@@ -4,23 +4,9 @@ from bs4 import BeautifulSoup
 from datetime import datetime, timezone, timedelta
 import xml.etree.ElementTree as ET
 import hashlib
-import csv
-
-# Constants
-FEED_LIMIT = 50  # Limit the feed to the most recent 50 items
-
-# Function to load case details from CSV
-def load_case_details(csv_file):
-    case_details = {}
-    with open(csv_file, mode='r') as file:
-        reader = csv.DictReader(file)
-        for row in reader:
-            case_details[row['case_number']] = {
-                'case_name': row['case_name'],
-                'job_number': row['job_number'],
-                'project_manager': row['project_manager']
-            }
-    return case_details
+import time
+import urllib.parse
+import sys
 
 # Load login information from environment variables
 login_data = {
@@ -28,157 +14,122 @@ login_data = {
     'Password': os.getenv('PASSWORD')
 }
 
-# Load the path to the CSV file from an environment variable
-csv_file_path = os.getenv('CSV_FILE_PATH')
+def login(session):
+    # Step 1: Open the login page and get the login form
+    login_url = 'https://apps.occ.ok.gov/PSTPortal/Account/Login'
+    login_page = session.get(login_url)
+    soup = BeautifulSoup(login_page.content, 'html.parser')
 
-# Check if the environment variable is set
-if not csv_file_path:
-    print("CSV_FILE_PATH environment variable is not set")
-    exit()
+    # Find the hidden input fields and add them to login_data
+    hidden_inputs = soup.find_all('input', type='hidden')
+    for hidden_input in hidden_inputs:
+        login_data[hidden_input['name']] = hidden_input['value']
 
-# Load case details
-case_details = load_case_details(csv_file_path)
+    # Print the login data for debugging
+    print('Login data:', login_data)
 
-# Step 1: Open the login page and get the login form
-login_url = 'https://apps.occ.ok.gov/PSTPortal/Account/Login'
+    # Step 3: Submit the login form
+    response = session.post(login_url, data=login_data)
+
+    # Verify login was successful
+    if response.url == login_url:
+        raise ValueError("Login failed. Please check your credentials.")
+
+    print('Logged in successfully')
+    return session
+
+# Initialize session and login
 session = requests.Session()
-login_page = session.get(login_url)
-soup = BeautifulSoup(login_page.content, 'html.parser')
+session = login(session)
 
-# Find the hidden input fields and add them to login_data
-hidden_inputs = soup.find_all('input', type='hidden')
-for hidden_input in hidden_inputs:
-    login_data[hidden_input['name']] = hidden_input['value']
+# Step 4: Function to navigate pages and scrape data
+def scrape_data(page_number):
+    date_14_days_ago = (datetime.now() - timedelta(days=14)).strftime('%m/%d/%Y')
+    encoded_date = urllib.parse.quote(date_14_days_ago)
+    url = (f'https://apps.occ.ok.gov/PSTPortal/PublicImaging/Home?indexName=DateRange'
+           f'&DateRangeFrom={encoded_date}&DateRangeTo={encoded_date}'
+           f'&btnSubmitDateSearch=Search+by+Date+Range&pageNumber={page_number}')
+    
+    print(f'Navigating to URL: {url}')  # Debug URL
 
-# Step 3: Submit the login form
-response = session.post(login_url, data=login_data)
+    response = session.get(url)
 
-# Verify login was successful
-if response.url == login_url:
-    raise ValueError("Login failed. Please check your credentials.")
+    # Check if the page contains the word "login"
+    if 'login' in response.text.lower():
+        print('Detected login page, attempting to log in again...')
+        session = login(session)
+        response = session.get(url)
 
-# Step 4: Navigate to the intermediary page
-intermediate_url = 'https://apps.occ.ok.gov/PSTPortal/CorrectiveAction/Forward?Length=16'
-session.get(intermediate_url)
+    if response.status_code != 200:
+        print(f'Failed to navigate to page {page_number}')
+        return []
 
-# Step 5: Navigate to the Case Actions page
-case_actions_url = 'https://apps.occ.ok.gov/LicenseePortal/CaseActions.aspx'
-case_actions_page = session.get(case_actions_url)
+    print(f'Navigated to page {page_number}')
+    soup = BeautifulSoup(response.content, 'html.parser')
 
-# Step 6: Parse the page with BeautifulSoup
-soup = BeautifulSoup(case_actions_page.content, 'html.parser')
+    # Print out the HTML content for debugging
+    print(soup.prettify())
 
-# Debug: Print the page content to verify if the table is present
-print(soup.prettify())
+    # Confirm table presence
+    table = soup.find('table', {'id': 'tablePublicImagingSearchResults'})
+    print(f'Table found on page {page_number}: {table is not None}')
 
-# Extract the necessary data from the table
-table = soup.find('table', {'class': 'rptGridView'})  # Adjust the class as necessary
-if not table:
-    raise ValueError("Table not found on the page")
+    if table:
+        print(table.prettify())  # Print the table HTML for debugging
 
-rows = table.find_all('tr')[1:]  # Skip the header row
+    results = []
+    if table:
+        tbody = table.find('tbody')
+        rows = tbody.find_all('tr') if tbody else []
 
-# Load existing feed items to avoid duplicates
-existing_titles = set()
-if os.path.exists('processed_items.txt'):
-    with open('processed_items.txt', 'r') as f:
-        existing_titles = set(line.strip() for line in f)
-    print(f"Loaded {len(existing_titles)} existing titles from processed_items.txt")
-else:
-    print("processed_items.txt not found, starting fresh")
+        # Process each row
+        for row in rows:
+            columns = row.find_all('td')
+            if len(columns) > 3:
+                description = columns[2].text.strip()
+                print(f'Description: {description}')  # Debug column content
+                if any(keyword in description for keyword in ['NOV', 'NOCR', 'SOR']):
+                    entry = {
+                        'id': columns[1].text.strip(),
+                        'description': description,
+                        'date': columns[3].text.strip()
+                    }
+                    results.append(entry)
 
-# Load the last processed date
-last_processed_date = None
-if os.path.exists('last_processed_date.txt'):
-    with open('last_processed_date.txt', 'r') as f:
-        last_processed_date = datetime.strptime(f.read().strip(), '%Y-%m-%d %H:%M:%S%z')
-    print(f"Loaded last processed date: {last_processed_date}")
-else:
-    print("last_processed_date.txt not found, starting fresh")
+    return results
 
-new_titles = []
-for row in rows:
-    cells = row.find_all('td')
-    if cells:
-        action_date = cells[1].text.strip()
-        case_number = cells[2].text.strip()
-        action_type = cells[3].text.strip()
-        action_status = cells[4].text.strip()
-        subject = cells[5].text.strip()
-        
-        # Lookup case details from the CSV file
-        case_detail = case_details.get(case_number, {
-            'case_name': 'Unknown Case Name',
-            'job_number': 'Unknown Job Number',
-            'project_manager': 'Unknown Project Manager'
-        })
-        
-        title = f"{case_number} - {case_detail['case_name']} - {action_type} - {action_status} - {subject} - {action_date}"
-        description = f"{case_number} - {case_detail['case_name']} - {case_detail['job_number']} - {case_detail['project_manager']} - {action_type} - {action_status} - {subject} - {action_date}"
-        
-        if title not in existing_titles:
-            try:
-                # Parse the date and convert to local time (CST)
-                date_obj = datetime.strptime(action_date, '%m/%d/%Y')
-                date_obj = date_obj.replace(tzinfo=timezone(timedelta(hours=-6)))  # CST without changing the date
-                
-                print(f"Parsed date: {date_obj} for action_date: {action_date}")  # Debug statement
-                
-                if not last_processed_date or date_obj > last_processed_date:
-                    new_titles.append((title, description, date_obj))
-            except ValueError:
-                print(f"Skipping invalid date format: {action_date}")
-                continue
+all_results = []
+# Loop through the pages
+for page in range(20):
+    page_results = scrape_data(page)
+    all_results.extend(page_results)
+    time.sleep(6)  # Wait between page requests to avoid rate limiting
 
-# Sort new titles by date (newest first)
-new_titles.sort(key=lambda x: x[2], reverse=True)
+print(f'Total data scraped: {len(all_results)} entries')
 
-# Limit the number of items in the feed
-new_titles = new_titles[:FEED_LIMIT]
-
-# Step 7: Generate RSS feed manually
-rss = ET.Element('rss', version='2.0', nsmap={'atom': 'http://www.w3.org/2005/Atom'})
+# Step 5: Generate RSS feed
+rss = ET.Element('rss', version='2.0')
 channel = ET.SubElement(rss, 'channel')
-ET.SubElement(channel, 'title').text = 'Case Actions Feed'
-ET.SubElement(channel, 'link').text = 'https://apps.occ.ok.gov/LicenseePortal/CaseActions.aspx'
-ET.SubElement(channel, 'description').text = 'Feed of case actions from the Oklahoma Corporation Commission'
+ET.SubElement(channel, 'title').text = 'Violation Search Feed'
+ET.SubElement(channel, 'link').text = 'https://apps.occ.ok.gov/PSTPortal/PublicImaging/Home'
+ET.SubElement(channel, 'description').text = 'Feed of violations from the Oklahoma Corporation Commission'
 ET.SubElement(channel, 'language').text = 'en-US'
 ET.SubElement(channel, 'lastBuildDate').text = datetime.now(timezone.utc).strftime('%a, %d %b %Y %H:%M:%S %z')
 
-# Add atom:link element
-atom_link = ET.SubElement(channel, '{http://www.w3.org/2005/Atom}link')
-atom_link.set('href', 'https://apps.occ.ok.gov/LicenseePortal/CaseActions.aspx')
-atom_link.set('rel', 'self')
-atom_link.set('type', 'application/rss+xml')
-
-for title, description, date_obj in new_titles:
+for entry in all_results:
     item = ET.SubElement(channel, 'item')
-    ET.SubElement(item, 'title').text = title
-    ET.SubElement(item, 'link').text = 'https://apps.occ.ok.gov/LicenseePortal/CaseActions.aspx'
-    ET.SubElement(item, 'description').text = description
-    
-    # Create a unique GUID using a hash
-    guid = hashlib.md5(title.encode()).hexdigest()
+    ET.SubElement(item, 'title').text = f"{entry['id']} - {entry['description']} - {entry['date']}"
+    ET.SubElement(item, 'link').text = 'https://apps.occ.ok.gov/PSTPortal/PublicImaging/Home'
+    ET.SubElement(item, 'description').text = f"{entry['id']} - {entry['description']} - {entry['date']}"
+    guid = hashlib.md5(f"{entry['id']} - {entry['description']} - {entry['date']}".encode()).hexdigest()
     ET.SubElement(item, 'guid').text = guid
-    
+    date_obj = datetime.strptime(entry['date'], '%m/%d/%Y')
+    date_obj = date_obj.replace(tzinfo=timezone.utc)
     ET.SubElement(item, 'pubDate').text = date_obj.strftime('%a, %d %b %Y %H:%M:%S %z')
 
-rss_feed_path = 'case_actions_feed.xml'
+# Define the path to the root directory of your GitHub repository
+main_directory = os.path.join(os.path.dirname(__file__), 'violation_search_feed.xml')
 tree = ET.ElementTree(rss)
-tree.write(rss_feed_path, encoding='utf-8', xml_declaration=True)
+tree.write(main_directory, encoding='utf-8', xml_declaration=True)
 
-# Save new titles to the processed items file
-if new_titles:
-    with open('processed_items.txt', 'a') as f:
-        for title, _, _ in new_titles:
-            f.write(title + '\n')
-    print(f"Added {len(new_titles)} new titles to processed_items.txt")
-
-# Update the last processed date
-if new_titles:
-    latest_date = new_titles[0][2]
-    with open('last_processed_date.txt', 'w') as f:
-        f.write(latest_date.strftime('%Y-%m-%d %H:%M:%S%z'))
-    print(f"Updated last processed date to: {latest_date}")
-
-print("RSS feed generated successfully")
+print(f"RSS feed generated successfully at {main_directory}")
