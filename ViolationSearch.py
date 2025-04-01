@@ -30,17 +30,20 @@ hidden_inputs = soup.find_all('input', type='hidden')
 for hidden_input in hidden_inputs:
     login_data[hidden_input['name']] = hidden_input['value']
 
+# Print the login data for debugging
+print('Login data:', login_data)
+
 # Step 3: Submit the login form
 response = session.post(login_url, data=login_data)
+
+# Print the response content for debugging
+print('Login response content:', response.text)
 
 if response.status_code != 200 or 'Logout' not in response.text:
     print('Login failed')
     exit()
 
 print('Logged in successfully')
-
-# Print the response content to verify login success
-print(response.text)
 
 # Step 4: Function to navigate pages and scrape data
 def scrape_data(page_number):
