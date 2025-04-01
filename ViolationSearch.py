@@ -42,7 +42,7 @@ session = requests.Session()
 session = login(session)
 
 # Step 4: Function to navigate pages and scrape data
-def scrape_data(page_number):
+def scrape_data(session, page_number):
     date_14_days_ago = (datetime.now() - timedelta(days=14)).strftime('%m/%d/%Y')
     encoded_date = urllib.parse.quote(date_14_days_ago)
     url = (f'https://apps.occ.ok.gov/PSTPortal/PublicImaging/Home?indexName=DateRange'
@@ -100,7 +100,7 @@ def scrape_data(page_number):
 all_results = []
 # Loop through the pages
 for page in range(20):
-    page_results = scrape_data(page)
+    page_results = scrape_data(session, page)
     all_results.extend(page_results)
     time.sleep(6)  # Wait between page requests to avoid rate limiting
 
