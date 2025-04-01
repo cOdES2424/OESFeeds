@@ -33,11 +33,14 @@ for hidden_input in hidden_inputs:
 # Step 3: Submit the login form
 response = session.post(login_url, data=login_data)
 
-if response.status_code != 200:
+if response.status_code != 200 or 'Logout' not in response.text:
     print('Login failed')
     exit()
 
 print('Logged in successfully')
+
+# Print the response content to verify login success
+print(response.text)
 
 # Step 4: Function to navigate pages and scrape data
 def scrape_data(page_number):
