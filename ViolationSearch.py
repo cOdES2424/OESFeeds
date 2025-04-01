@@ -22,12 +22,6 @@ login_data = {
 login_url = 'https://apps.occ.ok.gov/PSTPortal/Account/Login'
 session = requests.Session()
 login_page = session.get(login_url)
-
-if login_page.status_code != 200:
-    print('Failed to fetch login page')
-    exit()
-
-print('Login page fetched')
 soup = BeautifulSoup(login_page.content, 'html.parser')
 
 # Find the hidden input fields and add them to login_data
@@ -41,12 +35,9 @@ print('Login data:', login_data)
 # Step 3: Submit the login form
 response = session.post(login_url, data=login_data)
 
-# Print the response content for debugging
-print('Login response content:', response.text)
-
-if response.status_code != 200 or 'Logout' not in response.text:
-    print('Login failed')
-    exit()
+# Verify login was successful
+if response.url == login_url:
+    raise ValueError("Login failed. Please check your credentials.")
 
 print('Logged in successfully')
 
