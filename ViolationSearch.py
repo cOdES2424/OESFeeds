@@ -80,11 +80,11 @@ def scrape_data(page_number):
     return results
 
 all_results = []
-# Loop through the first 6 pages
-for page in range(6):
+# Loop through the pages
+for page in range(20):
     page_results = scrape_data(page)
     all_results.extend(page_results)
-    time.sleep(5)  # Wait between page requests to avoid rate limiting
+    time.sleep(6)  # Wait between page requests to avoid rate limiting
 
 print(f'Total data scraped: {len(all_results)} entries')
 
