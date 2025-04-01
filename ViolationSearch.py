@@ -6,7 +6,6 @@ import xml.etree.ElementTree as ET
 import hashlib
 import time
 import urllib.parse
-import sys
 
 # Load login information from environment variables
 login_data = {
