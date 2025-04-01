@@ -6,11 +6,16 @@ import xml.etree.ElementTree as ET
 import hashlib
 import time
 import urllib.parse
+import sys
 
-# Load login information from environment variables
+# Load login information from command-line arguments
+if len(sys.argv) != 3:
+    print("Usage: python ViolationSearch.py <username> <password>")
+    exit()
+
 login_data = {
-    'UserName': os.getenv('USERNAME'),
-    'Password': os.getenv('PASSWORD')
+    'UserName': sys.argv[1],
+    'Password': sys.argv[2]
 }
 
 # Step 1: Open the login page and get the login form
