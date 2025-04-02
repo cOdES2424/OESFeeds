@@ -99,7 +99,7 @@ def scrape_data(session, page_number):
 
 all_results = []
 # Loop through the pages
-for page in range(20):
+for page in range(25):
     page_results = scrape_data(session, page)
     all_results.extend(page_results)
     time.sleep(6)  # Wait between page requests to avoid rate limiting
