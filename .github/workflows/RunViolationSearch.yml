@@ -48,7 +48,7 @@ jobs:
           git config --global user.name 'github-actions'
           git config --global user.email 'github-actions@github.com'
           git commit -m 'Update RSS feed' || echo "No changes to commit"
-          git pull --rebase  # Pull the latest changes
+          git pull --rebase || git rebase --abort  # Handle merge conflicts
           git push
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
