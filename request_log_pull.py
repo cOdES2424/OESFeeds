@@ -46,6 +46,14 @@ login_data = {
     'Password': os.getenv('PASSWORD')
 }
 
+# Load the path to the CSV file from an environment variable
+csv_file_path = os.getenv('CSV_FILE_PATH')
+
+# Check if the environment variable is set
+if not csv_file_path:
+    print("CSV_FILE_PATH environment variable is not set")
+    exit()
+
 # Step 1: Open the login page and get the login form
 login_url = 'https://apps.occ.ok.gov/PSTPortal/Account/Login'
 session = requests.Session()
@@ -64,7 +72,15 @@ response = session.post(login_url, data=login_data)
 if response.url == login_url:
     raise ValueError("Login failed. Please check your credentials.")
 
-# Scrape request statuses from the additional page
+# Step 4: Navigate to the intermediary page
+intermediate_url = 'https://apps.occ.ok.gov/PSTPortal/CorrectiveAction/Forward?Length=16'
+session.get(intermediate_url)
+
+# Step 5: Navigate to the Search Work Requests page
+search_work_requests_url = 'https://apps.occ.ok.gov/LicenseePortal/SearchWorkRequests.aspx'
+search_work_requests_page = session.get(search_work_requests_url)
+
+# Step 6: Scrape request statuses from the Search Work Requests page
 request_statuses = scrape_request_statuses(session)
 
 # Save request statuses to log file
