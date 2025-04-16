@@ -1,5 +1,8 @@
 
+name: Request Log
 
+on:
+  schedule:
     - cron: '0 0 18 * * *'  # Runs daily at 6pm Central Time
   workflow_dispatch:  # Allows manual triggering of the workflow
 
