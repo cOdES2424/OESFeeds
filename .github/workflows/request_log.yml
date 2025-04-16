@@ -10,28 +10,52 @@ jobs:
   pull_data:
     runs-on: ubuntu-latest
 
+    environment: login  # Specify the environment
+
     steps:
-    - name: Checkout repository
-      uses: actions/checkout@v2
+      - name: Checkout repository
+        uses: actions/checkout@v3  # Updated to v3
 
-    - name: Set up Python
-      uses: actions/setup-python@v2
-      with:
-        python-version: '3.x'
+      - name: Clone private repository
+        run: |
+          git clone https://cOdES2424:${{ secrets.PAT }}@github.com/cOdES2424/Secure.git
+        env:
+          PAT: ${{ secrets.PAT }}
 
-    - name: Install dependencies
-      run: |
-        python -m pip install --upgrade pip
-        pip install requests beautifulsoup4
+      - name: Set up environment variable
+        run: echo "CSV_FILE_PATH=Secure/cases.csv" >> $GITHUB_ENV
 
-    - name: Run daily data pull script
-      run: |
-        python request_log_pull.py
+      - name: Set up Python
+        uses: actions/setup-python@v4  # Updated to v4
+        with:
+          python-version: '3.x'
 
-    - name: Commit and push log file
-      run: |
-        git config --global user.name 'github-actions[bot]'
-        git config --global user.email 'github-actions[bot]@users.noreply.github.com'
-        git add request_log.csv
-        git commit -m 'Update request log'
-        git push
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install requests beautifulsoup4 pandas
+
+      - name: Run daily data pull script
+        env:
+          USERNAME: ${{ secrets.USERNAME }}
+          PASSWORD: ${{ secrets.PASSWORD }}
+          CSV_FILE_PATH: ${{ env.CSV_FILE_PATH }}
+        run: python request_log_pull.py
+
+      - name: Debug Git status
+        run: |
+          git status
+          git log -1
+
+      - name: Commit and push log file
+        run: |
+          git config --global user.name 'github-actions'
+          git config --global user.email 'github-actions@github.com'
+          git add request_log.csv
+          git commit -m 'Update request log' || echo "No changes to commit"
+          git stash  # Stash changes
+          git pull --rebase  # Pull the latest changes
+          git stash pop  # Apply the stashed changes
+          git push
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
