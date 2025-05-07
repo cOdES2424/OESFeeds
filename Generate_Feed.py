@@ -5,6 +5,7 @@ from datetime import datetime, timezone, timedelta
 import xml.etree.ElementTree as ET
 import hashlib
 import csv
+from icalendar import Calendar, Event
 
 # Constants
 FEED_LIMIT = 50  # Limit the feed to the most recent 50 items
@@ -182,3 +183,21 @@ if new_titles:
     print(f"Updated last processed date to: {latest_date}")
 
 print("RSS feed generated successfully")
+
+# Step 8: Generate iCal file
+cal = Calendar()
+for title, description, date_obj in new_titles:
+    event = Event()
+    event.add('summary', title)
+    event.add('description', description)
+    event.add('dtstart', date_obj.date())
+    event.add('dtend', date_obj.date())
+    event.add('dtstamp', datetime.now())
+    event.add('uid', hashlib.md5(title.encode()).hexdigest())
+    cal.add_component(event)
+
+ical_feed_path = 'case_actions_feed.ics'
+with open(ical_feed_path, 'wb') as f:
+    f.write(cal.to_ical())
+
+print("iCal feed generated successfully")
