@@ -8,7 +8,7 @@ import csv
 from icalendar import Calendar, Event
 
 # Constants
-FEED_LIMIT = 50  # Limit the feed to the most recent 50 items
+FEED_LIMIT = 50  # Limit the feed to the most recent 50 items for RSS feed
 
 # Function to load case details from CSV
 def load_case_details(csv_file):
@@ -134,8 +134,8 @@ for row in rows:
 # Sort new titles by date (newest first)
 new_titles.sort(key=lambda x: x[2], reverse=True)
 
-# Limit the number of items in the feed
-new_titles = new_titles[:FEED_LIMIT]
+# Limit the number of items in the feed for RSS
+rss_titles = new_titles[:FEED_LIMIT]
 
 # Step 7: Generate RSS feed manually
 rss = ET.Element('rss', version='2.0', nsmap={'atom': 'http://www.w3.org/2005/Atom'})
@@ -152,7 +152,7 @@ atom_link.set('href', 'https://apps.occ.ok.gov/LicenseePortal/CaseActions.aspx')
 atom_link.set('rel', 'self')
 atom_link.set('type', 'application/rss+xml')
 
-for title, description, date_obj in new_titles:
+for title, description, date_obj in rss_titles:
     item = ET.SubElement(channel, 'item')
     ET.SubElement(item, 'title').text = title
     ET.SubElement(item, 'link').text = 'https://apps.occ.ok.gov/LicenseePortal/CaseActions.aspx'
@@ -186,6 +186,17 @@ print("RSS feed generated successfully")
 
 # Step 8: Generate iCal file
 cal = Calendar()
+
+# Load existing iCal events to retain all records
+ical_feed_path = 'case_actions_feed.ics'
+if os.path.exists(ical_feed_path):
+    with open(ical_feed_path, 'rb') as f:
+        existing_cal = Calendar.from_ical(f.read())
+        for component in existing_cal.walk():
+            if component.name == "VEVENT":
+                cal.add_component(component)
+
+# Add new events to iCal file
 for title, description, date_obj in new_titles:
     event = Event()
     event.add('summary', title)
@@ -196,7 +207,6 @@ for title, description, date_obj in new_titles:
     event.add('uid', hashlib.md5(title.encode()).hexdigest())
     cal.add_component(event)
 
-ical_feed_path = 'case_actions_feed.ics'
 with open(ical_feed_path, 'wb') as f:
     f.write(cal.to_ical())
 
