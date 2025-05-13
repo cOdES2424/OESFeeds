@@ -211,3 +211,9 @@ for title, description, date_obj in new_titles:
 # Limit the number of events in the iCal file to avoid exceeding size limits
 events = [component for component in cal.walk() if component.name == "VEVENT"]
 if len(events) > ICAL_EVENT_LIMIT:
+    cal.subcomponents = events[-ICAL_EVENT_LIMIT:]
+
+with open(ical_feed_path, 'wb') as f:
+    f.write(cal.to_ical())
+
+print("iCal feed generated successfully")
