@@ -9,6 +9,7 @@ from icalendar import Calendar, Event
 
 # Constants
 FEED_LIMIT = 50  # Limit the feed to the most recent 50 items for RSS feed
+ICAL_EVENT_LIMIT = 1000  # Limit the number of events in the iCal file
 
 # Function to load case details from CSV
 def load_case_details(csv_file):
@@ -207,7 +208,6 @@ for title, description, date_obj in new_titles:
     event.add('uid', hashlib.md5(title.encode()).hexdigest())
     cal.add_component(event)
 
-with open(ical_feed_path, 'wb') as f:
-    f.write(cal.to_ical())
-
-print("iCal feed generated successfully")
+# Limit the number of events in the iCal file to avoid exceeding size limits
+events = [component for component in cal.walk() if component.name == "VEVENT"]
+if len(events) > ICAL_EVENT_LIMIT:
