@@ -1,4 +1,3 @@
-
 import os
 import requests
 from bs4 import BeautifulSoup
@@ -14,6 +13,7 @@ login_data = {
     'Password': os.getenv('PASSWORD')
 }
 
+
 def login(session):
     login_url = 'https://apps.occ.ok.gov/PSTPortal/Account/Login'
 
@@ -25,10 +25,7 @@ def login(session):
     for hidden_input in hidden_inputs:
         login_data[hidden_input['name']] = hidden_input.get('value', '')
 
-    print('Login data:', {
-        'UserName': '***',
-        'Password': '***'
-    })
+    print('Login data loaded')
 
     response = session.post(login_url, data=login_data)
 
@@ -61,7 +58,7 @@ def scrape_data(session, page_number):
 
     response = session.get(url)
 
-    # Re-login if redirected to login page
+    # If OCC dumps us back to login, log back in and retry
     if 'login' in response.text.lower():
         print('Detected login page. Logging in again...')
         session = login(session)
@@ -88,7 +85,7 @@ def scrape_data(session, page_number):
         for row in rows:
             columns = row.find_all('td')
 
-            # New OCC table layout
+            # New OCC table format
             if len(columns) > 5:
                 image_id = columns[1].get_text(strip=True)
                 facility_number = columns[2].get_text(strip=True)
@@ -154,7 +151,7 @@ for entry in all_results:
 
     ET.SubElement(item, 'guid').text = guid
 
-    # New OCC date format: YYYY-MM-DD
+    # OCC now appears to return dates as YYYY-MM-DD
     date_obj = datetime.strptime(entry['date'], '%Y-%m-%d')
     date_obj = date_obj.replace(tzinfo=timezone.utc)
 
