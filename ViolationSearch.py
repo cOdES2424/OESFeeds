@@ -13,33 +13,33 @@ login_data = {
     'Password': os.getenv('PASSWORD')
 }
 
-
 def login(session):
+    # Step 1: Open the login page and get the login form
     login_url = 'https://apps.occ.ok.gov/PSTPortal/Account/Login'
-
     login_page = session.get(login_url)
     soup = BeautifulSoup(login_page.content, 'html.parser')
 
-    # Find hidden input fields and add them to login_data
+    # Find the hidden input fields and add them to login_data
     hidden_inputs = soup.find_all('input', type='hidden')
     for hidden_input in hidden_inputs:
-        login_data[hidden_input['name']] = hidden_input.get('value', '')
+        login_data[hidden_input['name']] = hidden_input['value']
 
-    print('Login data loaded')
+    # Print the login data for debugging
+    print('Login data:', login_data)
 
+    # Step 3: Submit the login form
     response = session.post(login_url, data=login_data)
 
+    # Verify login was successful
     if response.url == login_url:
         raise ValueError("Login failed. Please check your credentials.")
 
     print('Logged in successfully')
     return session
 
-
 # Initialize session and login
 session = requests.Session()
 session = login(session)
-
 
 def scrape_data(session, page_number):
     # Search date = 14 days ago
