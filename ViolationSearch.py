@@ -82,16 +82,20 @@ def scrape_data(session, page_number):
         rows = tbody.find_all('tr') if tbody else []
 
         # Process each row
-        for row in rows:
+        
+for row in rows:
             columns = row.find_all('td')
-            if len(columns) > 3:
-                description = columns[2].text.strip()
-                print(f'Description: {description}')  # Debug column content
-                if any(keyword in description for keyword in ['NOV', 'NOCR', 'SOR']):
+            if len(columns) > 5:
+                image_id = columns[1].text.strip()
+                facility_number = columns[2].text.strip()
+                description = columns[3].text.strip()
+                image_date = columns[4].text.strip()
+                print(f'Description: {description}')
+                if any(keyword in description.upper() for keyword in ['NOV', 'NOCR', 'SOR']):
                     entry = {
-                        'id': columns[1].text.strip(),
+                        'id': facility_number,
                         'description': description,
-                        'date': columns[3].text.strip()
+                        'date': image_date
                     }
                     results.append(entry)
 
