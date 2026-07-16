@@ -60,7 +60,19 @@ def scrape_data(session, page_number, attempt=1):
     
     print(f'Navigating to page {page_number} (attempt {attempt})', flush=True)
 
-    response = session.get(url, timeout=30)
+    try:
+        # OCC can be slow to begin responding. Use separate connect/read limits:
+        # 20 seconds to connect and 90 seconds to receive the response body.
+        response = session.get(url, timeout=(20, 90))
+    except (requests.exceptions.Timeout, requests.exceptions.ConnectionError) as exc:
+        print(
+            f'Page {page_number} request failed on attempt {attempt}: '
+            f'{type(exc).__name__}: {exc}',
+            flush=True,
+        )
+        # None means the request failed; it is not evidence of a genuinely
+        # blank result page and must not count toward the blank-page threshold.
+        return [], None
 
     # Only treat the response as a login page when it actually contains the
     # login form or redirected to the login URL. The word 'login' can appear
@@ -70,7 +82,15 @@ def scrape_data(session, page_number, attempt=1):
     if '/Account/Login' in response.url or login_form is not None:
         print('Session expired; logging in again...', flush=True)
         session = login(session)
-        response = session.get(url, timeout=30)
+        try:
+            response = session.get(url, timeout=(20, 90))
+        except (requests.exceptions.Timeout, requests.exceptions.ConnectionError) as exc:
+            print(
+                f'Page {page_number} request failed after re-login: '
+                f'{type(exc).__name__}: {exc}',
+                flush=True,
+            )
+            return [], None
 
     if response.status_code != 200:
         print(f'Failed to navigate to page {page_number}')
@@ -132,6 +152,7 @@ seen_ids = set()
 # crawling every possible page.
 MAX_PAGES = 25
 EMPTY_PAGE_RETRIES = 2
+REQUEST_FAILURE_RETRIES = 3
 MAX_CONSECUTIVE_EMPTY_PAGES = 3
 consecutive_empty_pages = 0
 
@@ -139,25 +160,61 @@ for page in range(MAX_PAGES):
     page_results = []
     row_count = 0
 
-    for attempt in range(1, EMPTY_PAGE_RETRIES + 2):
+    blank_attempts = 0
+    request_failures = 0
+    attempt = 0
+
+    while True:
+        attempt += 1
         page_results, row_count = scrape_data(session, page, attempt)
+
+        if row_count is None:
+            request_failures += 1
+            if request_failures > REQUEST_FAILURE_RETRIES:
+                print(
+                    f'Page {page} could not be retrieved after '
+                    f'{REQUEST_FAILURE_RETRIES + 1} attempts; skipping it '
+                    f'without counting it as blank.',
+                    flush=True,
+                )
+                break
+
+            delay = min(10 * request_failures, 30)
+            print(
+                f'Waiting {delay} seconds before retrying page {page} '
+                f'after a request failure '
+                f'({request_failures}/{REQUEST_FAILURE_RETRIES}).',
+                flush=True,
+            )
+            time.sleep(delay)
+            continue
+
         if row_count > 0:
             break
 
-        if attempt <= EMPTY_PAGE_RETRIES:
-            print(
-                f'Page {page} was blank; waiting and retrying '
-                f'({attempt}/{EMPTY_PAGE_RETRIES}).',
-                flush=True,
-            )
-            time.sleep(4)
+        blank_attempts += 1
+        if blank_attempts > EMPTY_PAGE_RETRIES:
+            break
+
+        print(
+            f'Page {page} was blank; waiting and retrying '
+            f'({blank_attempts}/{EMPTY_PAGE_RETRIES}).',
+            flush=True,
+        )
+        time.sleep(4)
 
     for entry in page_results:
         if entry['id'] not in seen_ids:
             seen_ids.add(entry['id'])
             all_results.append(entry)
 
-    if row_count == 0:
+    if row_count is None:
+        print(
+            f'Page {page} was skipped because the portal never returned a response; '
+            f'blank-page counter remains at {consecutive_empty_pages}.',
+            flush=True,
+        )
+    elif row_count == 0:
         consecutive_empty_pages += 1
         print(
             f'Page {page} remained blank after retries. '
