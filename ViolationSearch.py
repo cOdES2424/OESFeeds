@@ -15,7 +15,7 @@ LOGIN_URL = f"{BASE_URL}/PSTPortal/Account/Login"
 SEARCH_URL = f"{BASE_URL}/PSTPortal/PublicImaging/Home"
 FEED_FILENAME = "violation_search_feed.xml"
 STATUS_GUID = "occ-violation-search-no-results-status"
-KEYWORDS = ("NOV", "NOCR", "SOR")
+KEYWORDS = ("NOV", "NOCR", "SOR", "CONFIRMED RELEASE", "RELEASE REPORTING")
 
 MAX_PAGES = 25
 EMPTY_PAGE_RETRIES = 2
