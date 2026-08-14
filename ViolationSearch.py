@@ -53,7 +53,7 @@ def parse_search_date(value):
 def get_search_date():
     if TEST_MODE:
         return parse_search_date(TEST_DATE_RAW)
-    return datetime.now().date() - timedelta(days=14)
+    return datetime.now().date() - timedelta(days=15)
 
 
 def login(session):
