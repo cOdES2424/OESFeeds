@@ -5,15 +5,15 @@
     <link>https://apps.occ.ok.gov/PSTPortal/PublicImaging/Home</link>
     <description>Feed of violations from the Oklahoma Corporation Commission</description>
     <language>en-US</language>
-    <lastBuildDate>Mon, 23 Nov 2026 00:01:09 +0000</lastBuildDate>
+    <lastBuildDate>Mon, 23 Nov 2026 23:20:13 +0000</lastBuildDate>
     <item>
       <title>Status: OCC database accessed successfully — no new violation records</title>
       <link>https://apps.occ.ok.gov/PSTPortal/PublicImaging/Home</link>
-      <description>The OCC database was successfully accessed, but no NOV, NOCR, or SOR records were found for: November 6–7, 2026.
+      <description>The OCC database was successfully accessed, but no NOV, NOCR, or SOR records were found for: November 6–8, 2026.
 
-Checked dates: 2026-11-06, 2026-11-07</description>
+Checked dates: 2026-11-06, 2026-11-07, 2026-11-08</description>
       <guid isPermaLink="false">occ-violation-search-no-results-status</guid>
-      <pubDate>Mon, 23 Nov 2026 00:01:09 +0000</pubDate>
+      <pubDate>Mon, 23 Nov 2026 23:20:13 +0000</pubDate>
     </item>
   </channel>
 </rss>
